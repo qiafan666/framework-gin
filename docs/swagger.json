@@ -1,0 +1,65 @@
+{
+    "produces": [
+        "application/json"
+    ],
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "framework API Document",
+        "title": "framework API Document",
+        "contact": {},
+        "version": "1"
+    },
+    "paths": {
+        "/v1/test": {
+            "post": {
+                "description": "Test",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "test"
+                ],
+                "summary": "Test",
+                "parameters": [
+                    {
+                        "description": "request.Test",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.Test"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Test"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "request.Test": {
+            "type": "object",
+            "properties": {
+                "item": {
+                    "description": "BaseRequest\nBasePortalRequest",
+                    "type": "string"
+                }
+            }
+        },
+        "response.Test": {
+            "type": "object"
+        }
+    }
+}

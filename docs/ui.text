@@ -1,0 +1,30 @@
+<html>
+	<head>
+	<link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@3/swagger-ui.css">
+
+	<script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js"></script>
+	<script src="https://unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js" charset="UTF-8"></script>
+	</head>
+	<body>
+	<div id="swagger-ui"></div>
+	<script>
+		window.addEventListener('load', (event) => {
+			const ui = SwaggerUIBundle({
+			    url: "./docs/swagger.json",
+			    dom_id: '#swagger-ui',
+			    presets: [
+			      SwaggerUIBundle.presets.apis,
+			      SwaggerUIBundle.SwaggerUIStandalonePreset
+			    ],
+				plugins: [
+                	SwaggerUIBundle.plugins.DownloadUrl
+            	],
+				deepLinking: true,
+				// TODO(kradalby): Figure out why this does not work
+				// layout: "StandaloneLayout",
+			  })
+			window.ui = ui
+		});
+	</script>
+	</body>
+</html>

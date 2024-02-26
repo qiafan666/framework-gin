@@ -1,0 +1,12 @@
+server:
+  addr : 0.0.0.0
+  port: 8081
+  # debug info warn error
+  loglevel: debug
+  profile: test
+  logPath: /data/logs
+  logName:  test
+swagger:
+  enable: true
+pprof:
+  enable: true

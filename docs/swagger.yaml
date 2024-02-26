@@ -1,0 +1,44 @@
+definitions:
+  request.Test:
+    properties:
+      item:
+        description: |-
+          BaseRequest
+          BasePortalRequest
+        type: string
+    type: object
+  response.Test:
+    type: object
+info:
+  contact: {}
+  description: framework API Document
+  title: framework API Document
+  version: "1"
+paths:
+  /v1/test:
+    post:
+      consumes:
+      - application/json
+      description: Test
+      parameters:
+      - description: request.Test
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.Test'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.Test'
+      summary: Test
+      tags:
+      - test
+produces:
+- application/json
+schemes:
+- http
+swagger: "2.0"
