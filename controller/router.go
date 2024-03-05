@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"framework-gin/controller/base/v1"
+	"framework-gin/controller/v1/portal_controller"
 	"framework-gin/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons"
@@ -40,9 +40,10 @@ func RegisterRouter(r *gin.Engine) {
 		context.Status(200)
 	})
 
-	apiv1 := r.Group("/api/v1")
-	apiv1.Use(middleware.CheckPortalAuth)
-	{
-		apiv1.POST("/test", v1.PostTest)
-	}
+	v1 := r.Group("/v1")
+	v1.Use(middleware.CheckPortalAuth)
+
+	//注册controller
+	portal_controller.ControllerInit(v1)
+
 }

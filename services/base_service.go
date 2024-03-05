@@ -8,28 +8,28 @@ import (
 )
 
 // BaseService service layer interface
-type BaseService interface {
+type PortalService interface {
 	Test(info request.Test) (out response.Test, code commons.ResponseCode, err error)
 }
 
-var baseServiceIns *baseServiceImp
-var baseServiceInitOnce sync.Once
+var portalServiceIns *portalServiceImp
+var portalServiceInitOnce sync.Once
 
-func NewBaseServiceInstance() BaseService {
+func NewPortalServiceInstance() PortalService {
 
-	baseServiceInitOnce.Do(func() {
-		baseServiceIns = &baseServiceImp{
+	portalServiceInitOnce.Do(func() {
+		portalServiceIns = &portalServiceImp{
 			//dao: dao.Instance(),
 		}
 	})
 
-	return baseServiceIns
+	return portalServiceIns
 }
 
-type baseServiceImp struct {
+type portalServiceImp struct {
 	//dao dao.Dao
 }
 
-func (p baseServiceImp) Test(info request.Test) (out response.Test, code commons.ResponseCode, err error) {
+func (p portalServiceImp) Test(info request.Test) (out response.Test, code commons.ResponseCode, err error) {
 	return
 }

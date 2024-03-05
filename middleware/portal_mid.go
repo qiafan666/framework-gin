@@ -21,8 +21,8 @@ func init() {
 }
 
 var witheList = map[string]string{
-	"/api/v1/test": "",
-	"/v1/health":   "",
+	"/health":         "",
+	"/v1/portal/test": "",
 }
 
 func CheckPortalAuth(ctx *gin.Context) {
