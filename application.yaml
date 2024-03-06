@@ -4,7 +4,8 @@ server:
   # debug info warn error
   loglevel: debug
   profile: test
-  logPath: /data/logs
+  configPath: .\configs
+  logPath: .\log
   logName:  test
 swagger:
   enable: true
