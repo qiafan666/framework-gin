@@ -17,7 +17,7 @@ import (
 func main() {
 	server := v2.GetGotatoInstance()
 	server.RegisterErrorCodeAndMsg(commons.MsgLanguageEnglish, common.EnglishCodeMsg)
-	server.StartServer(v2.HttpService)
+	server.StartServer(v2.GinService)
 	router.RegisterRouter(server.App())
 	server.WaitClose()
 }
