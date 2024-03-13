@@ -27,14 +27,12 @@ var witheList = map[string]string{
 
 func CheckPortalAuth(ctx *gin.Context) {
 
-	var language, requestId, phone, companyName string
-	var userId, roleId int
-
-	baseRequest := ctx.Keys[(common.BaseRequest)].(request.BaseRequest)
-	language = baseRequest.Language
-	requestId = baseRequest.RequestId
 	//check white list
 	if _, ok := witheList[ctx.Request.RequestURI]; !ok {
+		var language, requestId string
+		baseRequest := ctx.Keys[(common.BaseRequest)].(request.BaseRequest)
+		language = baseRequest.Language
+		requestId = baseRequest.RequestId
 
 		//check jwt
 		parseToken, err := jwt.Parse(ctx.Request.Header.Get("Authorization"), func(token *jwt.Token) (interface{}, error) {
@@ -56,12 +54,7 @@ func CheckPortalAuth(ctx *gin.Context) {
 
 	}
 
-	ctx.Set(common.BaseTokenRequest, request.BaseTokenRequest{
-		BaseID:      int64(userId),
-		Phone:       phone,
-		Role:        roleId,
-		CompanyName: companyName,
-	})
+	ctx.Set(common.BaseTokenRequest, request.BaseTokenRequest{})
 
 	ctx.Next()
 }

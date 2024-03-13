@@ -2,7 +2,8 @@ package dao
 
 import (
 	"context"
-	"github.com/qiafan666/gotato"
+	gotato "github.com/qiafan666/gotato"
+	"github.com/qiafan666/gotato/commons"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -11,6 +12,7 @@ type Dao interface {
 	Tx() Dao
 	Rollback()
 	Commit() error
+	Db() *gorm.DB
 	WithContext(ctx context.Context) Dao
 	Create(interface{}) error
 	First([]string, map[string]interface{}, func(*gorm.DB) *gorm.DB, interface{}) error
@@ -18,6 +20,7 @@ type Dao interface {
 	Update(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Delete(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Count(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
+	Save(interface{}) error
 	Raw(string, interface{}) error
 }
 
@@ -25,8 +28,14 @@ type Imp struct {
 	db *gorm.DB
 }
 
+func (s Imp) Db() *gorm.DB {
+	return s.db
+}
 func (s Imp) Create(input interface{}) error {
 	return s.db.Create(input).Error
+}
+func (s Imp) Save(input interface{}) error {
+	return s.db.Save(input).Error
 }
 func (s Imp) First(selectStr []string, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB, output interface{}) (err error) {
 	if scope != nil {
@@ -34,6 +43,8 @@ func (s Imp) First(selectStr []string, where map[string]interface{}, scope func(
 	}
 	if len(selectStr) > 0 {
 		s.db = s.db.Select(selectStr)
+	} else {
+		s.db = s.db.Select("*")
 	}
 
 	return s.db.Model(output).Where(where).First(output).Error
@@ -44,6 +55,8 @@ func (s Imp) Find(selectStr []string, where map[string]interface{}, scope func(*
 	}
 	if len(selectStr) > 0 {
 		s.db = s.db.Select(selectStr)
+	} else {
+		s.db = s.db.Select("*")
 	}
 
 	return s.db.Model(output).Where(where).Find(output).Error
@@ -52,9 +65,19 @@ func (s Imp) Update(info interface{}, where map[string]interface{}, scope func(*
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
 	}
-	db := s.db.Model(info).Where(where).Updates(info)
-	err = db.Error
-	rows = db.RowsAffected
+
+	var tx *gorm.DB
+	if value, ok := info.(map[string]interface{}); ok {
+		table := value[commons.Table].(string)
+		delete(value, commons.Table)
+		tx = s.db.Table(table)
+	} else {
+		tx = s.db.Model(info)
+	}
+
+	updates := tx.Where(where).Updates(info)
+	err = updates.Error
+	rows = updates.RowsAffected
 	return
 }
 func (s Imp) Count(entity interface{}, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB) (total int64, err error) {
@@ -68,9 +91,9 @@ func (s Imp) Delete(entity interface{}, where map[string]interface{}, scope func
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
 	}
-	db := s.db.Model(entity).Where(where).Delete(&entity)
-	rows = db.RowsAffected
-	err = db.Error
+	deletes := s.db.Model(entity).Where(where).Delete(&entity)
+	rows = deletes.RowsAffected
+	err = deletes.Error
 	return
 }
 func (s Imp) Tx() Dao {
@@ -89,6 +112,9 @@ func (s Imp) Commit() error {
 }
 func (s Imp) Raw(sql string, output interface{}) error {
 	return s.db.Raw(sql).Scan(output).Error
+}
+func (s Imp) DB() *gorm.DB {
+	return s.db
 }
 
 var db *gorm.DB
