@@ -3,21 +3,10 @@ package portal_controller
 import (
 	"framework-gin/common/function"
 	"framework-gin/pojo/request"
-	"framework-gin/services"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons"
 	"net/http"
-	"sync"
 )
-
-var once sync.Once
-var portalService services.PortalService
-
-func init() {
-	once.Do(func() {
-		portalService = services.NewPortalServiceInstance()
-	})
-}
 
 // Test godoc
 // @Summary Test
