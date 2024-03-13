@@ -8,6 +8,7 @@ dataSource:
     max_idle_time: 20
     max_life_time: 20
     charset: utf8mb4
+    silent: false
     db_name: test
     name: test
     type: mysql
