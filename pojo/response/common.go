@@ -1,9 +1,9 @@
 package response
 
 type BasePagination struct {
-	Total        int64 `json:"total"`
-	CurrentPage  int   `json:"currentPage"`
-	PrePageCount int   `json:"prePageCount"`
+	Count       int64 `json:"count"`
+	CurrentPage int   `json:"current_page"`
+	PageCount   int   `json:"page_count"`
 }
 
 type Test struct {
