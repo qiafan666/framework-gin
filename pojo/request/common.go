@@ -9,10 +9,6 @@ type BaseRequest struct {
 }
 
 type BaseTokenRequest struct {
-	BaseID      int64  `json:"base_id"`
-	Phone       string `json:"phone"`
-	Role        int    `json:"role_id"`
-	CompanyName string `json:"company_name"`
 }
 
 type BasePagination struct {
