@@ -6,7 +6,7 @@ require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.1
-	github.com/qiafan666/gotato v1.0.80
+	github.com/qiafan666/gotato v1.0.82
 	github.com/swaggo/swag v1.16.3
 	gorm.io/gorm v1.25.4
 )
