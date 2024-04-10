@@ -217,8 +217,8 @@ github.com/pierrec/lz4/v4 v4.1.18 h1:xaKrnTkyoqfh1YItXl56+6KJNVYWlEEPuAQW9xsplYQ
 github.com/pierrec/lz4/v4 v4.1.18/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/qiafan666/gotato v1.0.82 h1:rUryVwKadu1CyCwX9Qlt8x40YP9ZYPSNE+f5twj5n4I=
-github.com/qiafan666/gotato v1.0.82/go.mod h1:92zkshz4yPK3CAmnBWcMturZ0Chc4N3eBWdCmMkoaRM=
+github.com/qiafan666/gotato v1.0.87 h1:N5Y9bzBgHpzRlokqrWXExty9ROIQ8YYVRW4a40p2WWQ=
+github.com/qiafan666/gotato v1.0.87/go.mod h1:92zkshz4yPK3CAmnBWcMturZ0Chc4N3eBWdCmMkoaRM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=

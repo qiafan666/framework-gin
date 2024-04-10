@@ -13,8 +13,6 @@ import (
 // body and api print
 var blackList = []string{
 	"/health",
-	"/swagger/*",
-	"/debug/pprof/*",
 }
 
 var once sync.Once

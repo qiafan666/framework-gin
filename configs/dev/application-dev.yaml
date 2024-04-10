@@ -1,0 +1,18 @@
+dataSource:
+  - addr: 127.0.0.1
+    port: 3306
+    username: test
+    password: "test"
+    idle_conn: 10
+    max_conn: 20
+    max_idle_time: 20
+    max_life_time: 20
+    charset: utf8mb4
+    db_name: test
+    name: test
+    type: mysql
+    slow_sql: 100 #ms
+jwt:
+  secret: 12345678
+  admin_secret: 88888888
+
