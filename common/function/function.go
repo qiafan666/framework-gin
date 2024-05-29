@@ -22,10 +22,10 @@ func BindAndValid(entity interface{}, ctx *gin.Context) (commons.ResponseCode, e
 		base.Set(reflect.ValueOf(baseRequest))
 	}
 
-	basePortalRequest, _ := ctx.Keys[(common.BaseTokenRequest)].(request.BaseTokenRequest)
-	basePortal := elem.FieldByName("BasePortalRequest")
-	if basePortal.Kind() != reflect.Invalid {
-		basePortal.Set(reflect.ValueOf(basePortalRequest))
+	baseTokenRequest, _ := ctx.Keys[(common.BaseTokenRequest)].(request.BaseTokenRequest)
+	baseToken := elem.FieldByName("BaseTokenRequest")
+	if baseToken.Kind() != reflect.Invalid {
+		baseToken.Set(reflect.ValueOf(baseTokenRequest))
 	}
 
 	err := ctx.Bind(entity)

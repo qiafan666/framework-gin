@@ -2,7 +2,7 @@ package main
 
 import (
 	"framework-gin/common"
-	router "framework-gin/controller"
+	"framework-gin/controller"
 	_ "framework-gin/docs"
 	"github.com/qiafan666/gotato/commons"
 	v2 "github.com/qiafan666/gotato/v2"
@@ -18,6 +18,6 @@ func main() {
 	server := v2.GetGotatoInstance()
 	server.RegisterErrorCodeAndMsg(commons.MsgLanguageEnglish, common.EnglishCodeMsg)
 	server.StartServer(v2.GinService)
-	router.RegisterRouter(server.App())
+	controller.RegisterRouter(server.App())
 	server.WaitClose()
 }

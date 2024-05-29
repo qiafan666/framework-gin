@@ -5,8 +5,8 @@ import (
 	"framework-gin/pojo/request"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons"
+	v2 "github.com/qiafan666/gotato/v2"
 	"net/http"
 )
 
@@ -17,7 +17,7 @@ var jwtConfig struct {
 }
 
 func init() {
-	gotato.GetGotatoInstance().LoadCustomizeConfig(&jwtConfig)
+	v2.GetGotatoInstance().LoadCustomizeConfig(&jwtConfig)
 }
 
 var witheList = map[string]string{

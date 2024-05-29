@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-// body and api print
+// 拉黑的url不会被记录到日志中
 var blackList = []string{
 	"/health",
 }
