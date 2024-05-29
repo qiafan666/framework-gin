@@ -1,10 +1,13 @@
 package function
 
 import (
+	"context"
 	"framework-gin/common"
 	"framework-gin/pojo/request"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/qiafan666/gotato/commons"
+	"github.com/qiafan666/gotato/commons/log"
 	"github.com/qiafan666/gotato/commons/utils"
 	"reflect"
 )
@@ -28,14 +31,31 @@ func BindAndValid(entity interface{}, ctx *gin.Context) (commons.ResponseCode, e
 		baseToken.Set(reflect.ValueOf(baseTokenRequest))
 	}
 
-	err := ctx.Bind(entity)
+	err := ctx.MustBindWith(entity, binding.JSON)
 	if err != nil {
+		log.Slog.ErrorF(ctx.Value("ctx").(context.Context), "BindAndValid error: %v", err)
 		return commons.ParameterError, err
 	}
 
 	if err = utils.Validate(entity); err != nil {
+		log.Slog.ErrorF(ctx.Value("ctx").(context.Context), "Validate error: %v", err)
 		return commons.ValidateError, err
 	}
 
 	return commons.OK, nil
+}
+
+func GetTraceId(ctx *gin.Context) string {
+	if traceId, ok := ctx.Value("trace_id").(string); ok {
+		return traceId
+	} else {
+		return ""
+	}
+}
+func GetCtx(ctx *gin.Context) context.Context {
+	if ctx, ok := ctx.Value("ctx").(context.Context); ok {
+		return ctx
+	} else {
+		return context.Background()
+	}
 }

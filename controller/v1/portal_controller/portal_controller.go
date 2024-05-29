@@ -14,7 +14,7 @@ import (
 // @Tags test
 // @Accept  json
 // @Produce  json
-// @Router /api/v1/test [post]
+// @Router /v1/portal/test [post]
 // @param data body request.Test true "request.Test"
 // @Success 200 {object} response.Test
 func Test(c *gin.Context) {

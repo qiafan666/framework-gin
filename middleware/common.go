@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"context"
 	"framework-gin/common"
+	"framework-gin/common/function"
 	"framework-gin/pojo/request"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons"
@@ -30,11 +30,10 @@ func Common(ctx *gin.Context) {
 	if language == "" {
 		language = commons.DefaultLanguage
 	}
-	c := ctx.Value("ctx").(context.Context)
-	requestId := c.Value("trace_id").(string)
+
 	ctx.Set(common.BaseRequest, request.BaseRequest{
-		Ctx:       c,
-		RequestId: requestId,
+		Ctx:       function.GetCtx(ctx),
+		RequestId: function.GetTraceId(ctx),
 		Language:  language,
 	})
 
