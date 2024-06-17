@@ -13,7 +13,7 @@ func init() {
 	}
 }
 
-// define the error code
+// Error define the error code
 const (
 	Error = 9000
 )
