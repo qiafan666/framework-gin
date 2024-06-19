@@ -1,8 +1,8 @@
 dataSource:
   - addr: 127.0.0.1
     port: 3306
-    username: test
-    password: "test"
+    username: root
+    password: admin123
     idle_conn: 10
     max_conn: 20
     max_idle_time: 20
@@ -14,5 +14,3 @@ dataSource:
     slow_sql: 100 #ms
 jwt:
   secret: 12345678
-  admin_secret: 88888888
-

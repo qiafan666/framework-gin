@@ -1,13 +1,14 @@
 package services
 
 import (
+	"framework-gin/dao"
 	"framework-gin/pojo/request"
 	"framework-gin/pojo/response"
 	"github.com/qiafan666/gotato/commons"
 	"sync"
 )
 
-// BaseService service layer interface
+// PortalService service layer interface
 type PortalService interface {
 	Test(info request.Test) (out response.Test, code commons.ResponseCode, err error)
 }
@@ -19,7 +20,7 @@ func NewPortalServiceInstance() PortalService {
 
 	portalServiceInitOnce.Do(func() {
 		portalServiceIns = &portalServiceImp{
-			//dao: dao.Instance(),
+			dao: dao.Instance(),
 		}
 	})
 
@@ -27,7 +28,7 @@ func NewPortalServiceInstance() PortalService {
 }
 
 type portalServiceImp struct {
-	//dao dao.Dao
+	dao dao.Dao
 }
 
 func (p portalServiceImp) Test(info request.Test) (out response.Test, code commons.ResponseCode, err error) {
