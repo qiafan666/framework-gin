@@ -18,7 +18,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/test": {
+        "/v1/portal/test": {
             "post": {
                 "description": "Test",
                 "consumes": [
@@ -58,7 +58,6 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "item": {
-                    "description": "BaseRequest\nBasePortalRequest",
                     "type": "string"
                 }
             }

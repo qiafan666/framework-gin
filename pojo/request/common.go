@@ -17,7 +17,7 @@ type BasePagination struct {
 }
 
 type Test struct {
-	BaseRequest
-	BaseTokenRequest
-	Item string `json:"item"`
+	BaseRequest      `json:"-"`
+	BaseTokenRequest `json:"-"`
+	Item             string `json:"item"`
 }

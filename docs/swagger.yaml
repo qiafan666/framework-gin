@@ -2,9 +2,6 @@ definitions:
   request.Test:
     properties:
       item:
-        description: |-
-          BaseRequest
-          BasePortalRequest
         type: string
     type: object
   response.Test:
@@ -15,7 +12,7 @@ info:
   title: framework API Document
   version: "1"
 paths:
-  /v1/test:
+  /v1/portal/test:
     post:
       consumes:
       - application/json
