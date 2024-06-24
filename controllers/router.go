@@ -3,30 +3,19 @@ package controllers
 import (
 	"framework-gin/middleware"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func RegisterRouter(r *gin.Engine) {
 	//default setting
-	r.Use(func(context *gin.Context) {
-		method := context.Request.Method
-
-		context.Header("Access-Control-Allow-Origin", "*")
-		context.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token, x-token")
-		context.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PATCH, PUT")
-		context.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-		context.Header("Access-Control-Allow-Credentials", "true")
-
-		if method == "OPTIONS" {
-			context.AbortWithStatus(http.StatusNoContent)
-		}
-	}).Use(middleware.Common).GET("/health", func(context *gin.Context) {
-		context.Status(200)
-	})
-
-	v1 := r.Group("/v1").Use(middleware.CheckPortalAuth)
+	r.Use(middleware.Cors).
+		Use(middleware.Common).
+		Use(middleware.CheckToken).
+		GET("/health", middleware.Health)
 	//注册controller
 	portalController := NewPortalControllerInstance()
-	v1.POST("portal/test", portalController.Test)
 
+	portalGroup := r.Group("v1/portal")
+	{
+		portalGroup.POST("/test", portalController.Test)
+	}
 }
