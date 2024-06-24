@@ -1,7 +1,6 @@
-package controller
+package v1
 
 import (
-	"framework-gin/controller/v1/portal_controller"
 	"framework-gin/middleware"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -27,6 +26,7 @@ func RegisterRouter(r *gin.Engine) {
 
 	v1 := r.Group("/v1").Use(middleware.CheckPortalAuth)
 	//注册controller
-	portal_controller.PortalControllerInit(v1)
+	portalController := NewPortalControllerInstance()
+	v1.POST("portal/test", portalController.Test)
 
 }
