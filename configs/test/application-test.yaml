@@ -14,5 +14,5 @@ dataSource:
     slow_sql: 100 #ms
 jwt:
   secret: 12345678
-  admin_secret: 88888888
+  expire: 30 #day
 

@@ -8,11 +8,13 @@ import (
 	"github.com/qiafan666/gotato/commons"
 	v2 "github.com/qiafan666/gotato/v2"
 	"net/http"
+	"time"
 )
 
 var jwtConfig struct {
 	JWT struct {
 		Secret string `yaml:"secret"`
+		Expire int    `yaml:"expire"` //天数
 	} `yaml:"jwt"`
 }
 
@@ -25,7 +27,7 @@ var witheList = map[string]string{
 	"/v1/portal/test": "",
 }
 
-func CheckPortalAuth(ctx *gin.Context) {
+func CheckToken(ctx *gin.Context) {
 
 	//check white list
 	if _, ok := witheList[ctx.Request.RequestURI]; !ok {
@@ -45,7 +47,7 @@ func CheckPortalAuth(ctx *gin.Context) {
 		}
 
 		if _, ok := parseToken.Claims.(jwt.MapClaims); ok && parseToken.Valid {
-
+			//TODO 查询用户信息
 		} else {
 			ctx.JSON(http.StatusOK, commons.BuildFailed(commons.TokenError, language, requestId))
 			ctx.Abort()
@@ -57,4 +59,17 @@ func CheckPortalAuth(ctx *gin.Context) {
 	ctx.Set(common.BaseTokenRequest, request.BaseTokenRequest{})
 
 	ctx.Next()
+}
+
+func CreateToken(uuid string, iss string) (string, error) {
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"uuid": uuid,
+		"iss":  iss,
+		"iat":  time.Now().Unix(),
+		"exp":  time.Now().Add(time.Hour * 24 * time.Duration(jwtConfig.JWT.Expire)).Unix(),
+	}).SignedString([]byte(jwtConfig.JWT.Secret))
+	if err != nil {
+		return "", err
+	}
+	return token, nil
 }

@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"framework-gin/dao/autoMigrate"
 	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/utils"
 	v2 "github.com/qiafan666/gotato/v2"
@@ -146,8 +145,6 @@ var once sync.Once
 func Instance() Dao {
 	once.Do(func() {
 		db = v2.GetGotatoInstance().FeatureDB("test").GormDB()
-		//自动生成表结构, 仅在第一次创建时使用，后续更新表结构需要手动执行
-		autoMigrate.CreateTables(db)
 	})
 	return &Imp{db: db}
 }
