@@ -1,12 +1,12 @@
 module framework-gin
 
-go 1.22.2
+go 1.22.4
 
 require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.1
-	github.com/qiafan666/gotato v1.0.98
+	github.com/qiafan666/gotato v1.1.2
 	github.com/swaggo/swag v1.16.3
 	gorm.io/gorm v1.25.4
 )
@@ -20,19 +20,14 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/Shopify/goreferrer v0.0.0-20220729165902-8cddb4f5de06 // indirect
-	github.com/Shopify/sarama v1.38.1 // indirect
 	github.com/aliyun/aliyun-oss-go-sdk v2.2.7+incompatible // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/eapache/go-resiliency v1.4.0 // indirect
-	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
-	github.com/eapache/queue v1.1.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/flosch/pongo2/v4 v4.0.2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
@@ -54,18 +49,11 @@ require (
 	github.com/google/uuid v1.5.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
-	github.com/hashicorp/errwrap v1.0.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/go-uuid v1.0.3 // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/pgx/v5 v5.3.1 // indirect
-	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
-	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
-	github.com/jcmturner/gofork v1.7.6 // indirect
-	github.com/jcmturner/gokrb5/v8 v8.4.4 // indirect
-	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -87,8 +75,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
-	github.com/pierrec/lz4/v4 v4.1.18 // indirect
-	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect

@@ -3,7 +3,7 @@ package dao
 import (
 	"context"
 	"github.com/qiafan666/gotato/commons"
-	"github.com/qiafan666/gotato/commons/utils"
+	"github.com/qiafan666/gotato/commons/gcommon"
 	v2 "github.com/qiafan666/gotato/v2"
 	"gorm.io/gorm"
 	"sync"
@@ -23,7 +23,6 @@ type Dao interface {
 	Delete(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Count(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Save(interface{}) error
-	Raw(string, interface{}) error
 }
 
 type Imp struct {
@@ -96,7 +95,7 @@ func (s Imp) UpdateNotNullFields(info interface{}, table string, where map[strin
 	}
 
 	s.db = s.db.Table(table)
-	updates := s.db.Where(where).Updates(utils.StructToStringMapWithNilFilter(info, table, jumpStrings...))
+	updates := s.db.Where(where).Updates(gcommon.StructToStringMapWithNilFilter(info, table, jumpStrings...))
 
 	err = updates.Error
 	rows = updates.RowsAffected
@@ -131,12 +130,6 @@ func (s Imp) Rollback() {
 }
 func (s Imp) Commit() error {
 	return s.db.Commit().Error
-}
-func (s Imp) Raw(sql string, output interface{}) error {
-	return s.db.Raw(sql).Scan(output).Error
-}
-func (s Imp) DB() *gorm.DB {
-	return s.db
 }
 
 var db *gorm.DB

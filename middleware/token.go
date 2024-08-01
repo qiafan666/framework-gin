@@ -46,7 +46,7 @@ func CheckToken(ctx *gin.Context) {
 			return
 		}
 
-		if _, ok := parseToken.Claims.(jwt.MapClaims); ok && parseToken.Valid {
+		if _, ok = parseToken.Claims.(jwt.MapClaims); ok && parseToken.Valid {
 			//TODO 查询用户信息
 		} else {
 			ctx.JSON(http.StatusOK, commons.BuildFailed(commons.TokenError, language, requestId))
