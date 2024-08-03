@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/qiafan666/gotato/commons"
+	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/log"
-	"github.com/qiafan666/gotato/commons/utils"
 	"reflect"
 )
 
@@ -37,7 +37,7 @@ func BindAndValid(entity interface{}, ctx *gin.Context) (commons.ResponseCode, e
 		return commons.ParameterError, err
 	}
 
-	if err = utils.Validate(entity); err != nil {
+	if err = gcommon.Validate(entity); err != nil {
 		log.Slog.ErrorF(ctx.Value("ctx").(context.Context), "Validate error: %v", err)
 		return commons.ValidateError, err
 	}
