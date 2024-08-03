@@ -2,10 +2,8 @@ package dao
 
 import (
 	"context"
-	"github.com/qiafan666/gotato/commons"
-	"github.com/qiafan666/gotato/commons/gcommon"
+	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gmap"
-	v2 "github.com/qiafan666/gotato/v2"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -20,15 +18,15 @@ type Dao interface {
 	First([]string, map[string]interface{}, func(*gorm.DB) *gorm.DB, interface{}) error
 	Find([]string, map[string]interface{}, func(*gorm.DB) *gorm.DB, interface{}) error
 	Update(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
-	UpdateNotNullFields(interface{}, string, map[string]interface{}, func(*gorm.DB) *gorm.DB, ...string) (int64, error)
+	UpdateMap(map[string]interface{}, string, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Delete(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Count(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Save(interface{}) error
+	Raw(string, interface{}) error
 }
 
 type Imp struct {
-	db *gorm.DB
-	//默认where条件
+	db           *gorm.DB
 	defaultWhere map[string]interface{}
 }
 
@@ -46,7 +44,6 @@ func (s Imp) First(selectStr []string, where map[string]interface{}, scope func(
 	if len(s.defaultWhere) > 0 {
 		where = gmap.MergeMapsUnique(where, s.defaultWhere)
 	}
-
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
 	}
@@ -63,7 +60,6 @@ func (s Imp) Find(selectStr []string, where map[string]interface{}, scope func(*
 	if len(s.defaultWhere) > 0 {
 		where = gmap.MergeMapsUnique(where, s.defaultWhere)
 	}
-
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
 	}
@@ -80,43 +76,31 @@ func (s Imp) Update(info interface{}, where map[string]interface{}, scope func(*
 	if len(s.defaultWhere) > 0 {
 		where = gmap.MergeMapsUnique(where, s.defaultWhere)
 	}
-
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
 	}
-	var tx *gorm.DB
-	if value, ok := info.(map[string]interface{}); ok {
-		table := value[commons.Table].(string)
-		delete(value, commons.Table)
-		tx = s.db.Table(table)
-	} else {
-		tx = s.db.Model(info)
-	}
-
-	updates := tx.Where(where).Updates(info)
+	updates := s.db.Model(info).Where(where).Updates(info)
 	err = updates.Error
 	rows = updates.RowsAffected
 	return
 }
 
-// UpdateNotNullFields 更新不为nil的字段
+// UpdateMap 更新map结构体
 // info 要更新的结构体
 // table 要更新的表名
 // where 更新条件
 // scope 事务作用域
 // jumpStrings 跳过结构体中的字段名
-func (s Imp) UpdateNotNullFields(info interface{}, table string, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB, jumpStrings ...string) (rows int64, err error) {
+func (s Imp) UpdateMap(info map[string]interface{}, table string, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB) (rows int64, err error) {
 
 	if len(s.defaultWhere) > 0 {
 		where = gmap.MergeMapsUnique(where, s.defaultWhere)
 	}
-
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
 	}
 
-	s.db = s.db.Table(table)
-	updates := s.db.Where(where).Updates(gcommon.StructToStringMapWithNilFilter(info, table, jumpStrings...))
+	updates := s.db.Table(table).Where(where).Updates(info)
 
 	err = updates.Error
 	rows = updates.RowsAffected
@@ -127,7 +111,6 @@ func (s Imp) Count(entity interface{}, where map[string]interface{}, scope func(
 	if len(s.defaultWhere) > 0 {
 		where = gmap.MergeMapsUnique(where, s.defaultWhere)
 	}
-
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
 	}
@@ -135,10 +118,6 @@ func (s Imp) Count(entity interface{}, where map[string]interface{}, scope func(
 	return
 }
 func (s Imp) Delete(entity interface{}, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB) (rows int64, err error) {
-
-	if len(s.defaultWhere) > 0 {
-		where = gmap.MergeMapsUnique(where, s.defaultWhere)
-	}
 
 	if scope != nil {
 		s.db = s.db.Scopes(scope)
@@ -162,19 +141,23 @@ func (s Imp) Rollback() {
 func (s Imp) Commit() error {
 	return s.db.Commit().Error
 }
+func (s Imp) Raw(sql string, output interface{}) error {
+	return s.db.Raw(sql).Scan(output).Error
+}
+func (s Imp) DB() *gorm.DB {
+	return s.db
+}
 
 var db *gorm.DB
 var once sync.Once
 
 func Instance() Dao {
 	once.Do(func() {
-		db = v2.GetGotatoInstance().FeatureDB("test").GormDB()
+		db = gotato.GetGotatoInstance().FeatureDB("test").GormDB()
 	})
 
 	//默认is_deleted=0条件
-	defaultWhere := map[string]interface{}{
-		"is_deleted": 0,
-	}
+	defaultWhere := map[string]interface{}{}
 
 	return &Imp{db: db, defaultWhere: defaultWhere}
 }
