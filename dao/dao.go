@@ -1,8 +1,8 @@
-package gotatodb
+package dao
 
 import (
 	"context"
-	gotato "github.com/qiafan666/gotato"
+	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gmap"
 	"gorm.io/gorm"
 	"sync"

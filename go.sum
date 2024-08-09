@@ -186,6 +186,7 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/qiafan666/gotato v1.1.4 h1:OuG6w5OKpkU53ECkZGs066pI3ZAGPq8W6WEBuDOLdjY=
 github.com/qiafan666/gotato v1.1.4/go.mod h1:G7/LpHo+kNynFpGOtyM2oD2dEiZaBqlXxPMukSBvvOo=
+github.com/qiafan666/gotato v1.1.5/go.mod h1:tg0uU+koSmIpabDrPU1mwmFnycjcDaPxivH5ePDc7jU=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
