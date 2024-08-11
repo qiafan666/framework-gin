@@ -6,8 +6,8 @@ server:
   # debug info warn error
   zap_log_level: debug
   profile: dev
-  configPath: .\configs
-  logPath: .\log
+  configPath: ./configs
+  logPath: ./log
   logName:  test
 swagger:
   enable: true

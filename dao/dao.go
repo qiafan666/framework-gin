@@ -2,8 +2,8 @@ package dao
 
 import (
 	"context"
-	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gmap"
+	v2 "github.com/qiafan666/gotato/v2"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -153,7 +153,7 @@ var once sync.Once
 
 func Instance() Dao {
 	once.Do(func() {
-		db = gotato.GetGotatoInstance().FeatureDB("test").GormDB()
+		db = v2.GetGotatoInstance().FeatureDB("test").GormDB()
 	})
 
 	//默认is_deleted=0条件
