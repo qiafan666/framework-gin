@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"framework-gin/dao/autoMigrate"
 	"github.com/qiafan666/gotato/commons/gmap"
 	v2 "github.com/qiafan666/gotato/v2"
 	"gorm.io/gorm"
@@ -158,6 +159,6 @@ func Instance() Dao {
 
 	//默认is_deleted=0条件
 	defaultWhere := map[string]interface{}{}
-
+	autoMigrate.CreateTables(db)
 	return &Imp{db: db, defaultWhere: defaultWhere}
 }

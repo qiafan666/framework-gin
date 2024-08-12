@@ -14,6 +14,12 @@ type GenService interface {
 	UserDelete(info request.UserDelete) (out response.UserDelete, code commons.ResponseCode, err error)
 	UserUpdate(info request.UserUpdate) (out response.UserUpdate, code commons.ResponseCode, err error)
 	UserList(info request.UserList) (out response.UserList, code commons.ResponseCode, err error)
+
+	UserVersionCreate(info request.UserVersionCreate) (out response.UserVersionCreate, code commons.ResponseCode, err error)
+	UserVersionDelete(info request.UserVersionDelete) (out response.UserVersionDelete, code commons.ResponseCode, err error)
+	UserVersionUpdate(info request.UserVersionUpdate) (out response.UserVersionUpdate, code commons.ResponseCode, err error)
+	UserVersionList(info request.UserVersionList) (out response.UserVersionList, code commons.ResponseCode, err error)
+
 	VersionCreate(info request.VersionCreate) (out response.VersionCreate, code commons.ResponseCode, err error)
 	VersionDelete(info request.VersionDelete) (out response.VersionDelete, code commons.ResponseCode, err error)
 	VersionUpdate(info request.VersionUpdate) (out response.VersionUpdate, code commons.ResponseCode, err error)
@@ -55,6 +61,27 @@ func (g genServiceImp) UserUpdate(info request.UserUpdate) (out response.UserUpd
 	return
 }
 func (g genServiceImp) UserList(info request.UserList) (out response.UserList, code commons.ResponseCode, err error) {
+	//todo
+	return
+}
+
+// ================================================================================
+// --------------------UserVersion service layer implementation--------------------
+// ================================================================================
+
+func (g genServiceImp) UserVersionCreate(info request.UserVersionCreate) (out response.UserVersionCreate, code commons.ResponseCode, err error) {
+	//todo
+	return
+}
+func (g genServiceImp) UserVersionDelete(info request.UserVersionDelete) (out response.UserVersionDelete, code commons.ResponseCode, err error) {
+	//todo
+	return
+}
+func (g genServiceImp) UserVersionUpdate(info request.UserVersionUpdate) (out response.UserVersionUpdate, code commons.ResponseCode, err error) {
+	//todo
+	return
+}
+func (g genServiceImp) UserVersionList(info request.UserVersionList) (out response.UserVersionList, code commons.ResponseCode, err error) {
 	//todo
 	return
 }

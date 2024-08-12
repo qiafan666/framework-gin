@@ -24,7 +24,7 @@ is_out_page: false # 是否输出分页函数
 
 db_info:
     host : 127.0.0.1 # type=1的时候，host为yml文件全路径
-    port : 55000
+    port : 55002
     username : root
     password : admin123
     database : test

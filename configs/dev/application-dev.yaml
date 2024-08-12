@@ -1,6 +1,6 @@
 dataSource:
   - addr: 127.0.0.1
-    port: 55000
+    port: 55002
     username: root
     password: admin123
     idle_conn: 10

@@ -21,6 +21,7 @@ func CreateTables(db *gorm.DB) {
 var Tables = []interface{}{
 	&User{},
 	&Version{},
+	&UserVersion{},
 }
 
 // BaseModel is base struct for entity, copy from gorm.Model
@@ -51,4 +52,14 @@ type Version struct {
 // TableName .
 func (s *Version) TableName() string {
 	return "version"
+}
+
+type UserVersion struct {
+	BaseModel
+	UserID    int64 `gorm:"column:user_id;comment:user主键ID" json:"user_id"`
+	VersionID int64 `gorm:"column:version_id;comment:version主键ID" json:"version_id"`
+}
+
+func (s *UserVersion) TableName() string {
+	return "user_version"
 }

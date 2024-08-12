@@ -22,11 +22,46 @@ type UserUpdate struct {
 // UserList User表列表返回参数
 type UserList struct {
 	BasePagination `json:"-"`
-	ID             int64     `json:"id"`   // 主键ID
-	UUID           string    `json:"uuid"` // UUID
-	CreatedTime    time.Time `json:"created_time"`
-	Name           string    `json:"name"` // 名称
-	Age            int       `json:"age"`  // 年龄
+	UserList       []User `json:"user_list"`
+}
+
+// User User列表单项内容
+type User struct {
+	ID          int64     `json:"id"`   // 主键ID
+	UUID        string    `json:"uuid"` // UUID
+	CreatedTime time.Time `json:"created_time"`
+	Name        string    `json:"name"` // 名称
+	Age         int       `json:"age"`  // 年龄
+}
+
+// ================================================================================
+// --------------------------------user_version表---------------------------------
+// ================================================================================
+
+// UserVersionCreate UserVersion表创建返回参数
+type UserVersionCreate struct{}
+
+// UserVersionDelete UserVersion表删除返回参数
+type UserVersionDelete struct {
+}
+
+// UserVersionUpdate UserVersion表更新返回参数
+type UserVersionUpdate struct {
+}
+
+// UserVersionList UserVersion表列表返回参数
+type UserVersionList struct {
+	BasePagination  `json:"-"`
+	UserVersionList []UserVersion `json:"user_version_list"`
+}
+
+// UserVersion UserVersion列表单项内容
+type UserVersion struct {
+	ID          int64     `json:"id"`   // 主键ID
+	UUID        string    `json:"uuid"` // UUID
+	CreatedTime time.Time `json:"created_time"`
+	UserID      int64     `json:"user_id"`    // user主键ID
+	VersionID   int64     `json:"version_id"` // version主键ID
 }
 
 // ================================================================================
@@ -47,8 +82,13 @@ type VersionUpdate struct {
 // VersionList Version表列表返回参数
 type VersionList struct {
 	BasePagination `json:"-"`
-	ID             int64     `json:"id"`   // 主键ID
-	UUID           string    `json:"uuid"` // UUID
-	CreatedTime    time.Time `json:"created_time"`
-	Version        string    `json:"version"` // 版本号
+	VersionList    []Version `json:"version_list"`
+}
+
+// Version Version列表单项内容
+type Version struct {
+	ID          int64     `json:"id"`   // 主键ID
+	UUID        string    `json:"uuid"` // UUID
+	CreatedTime time.Time `json:"created_time"`
+	Version     string    `json:"version"` // 版本号
 }

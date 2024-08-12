@@ -1,5 +1,7 @@
 package request
 
+import ()
+
 // ================================================================================
 // ------------------------------------user表-------------------------------------
 // ================================================================================
@@ -31,8 +33,43 @@ type UserUpdate struct {
 // UserList User表列表请求参数
 type UserList struct {
 	BaseRequest      `json:"-"`
-	BasePagination   `json:"-"`
 	BaseTokenRequest `json:"-"`
+	BasePagination
+}
+
+// ================================================================================
+// --------------------------------user_version表---------------------------------
+// ================================================================================
+
+// UserVersionCreate UserVersion表创建请求参数
+type UserVersionCreate struct {
+	BaseRequest      `json:"-"`
+	BaseTokenRequest `json:"-"`
+	UserID           int64 `json:"user_id"`    // user主键ID
+	VersionID        int64 `json:"version_id"` // version主键ID
+}
+
+// UserVersionDelete UserVersion表删除请求参数
+type UserVersionDelete struct {
+	BaseRequest      `json:"-"`
+	BaseTokenRequest `json:"-"`
+	UUID             string `json:"uuid"` // UUID
+}
+
+// UserVersionUpdate UserVersion表更新请求参数
+type UserVersionUpdate struct {
+	BaseRequest      `json:"-"`
+	BaseTokenRequest `json:"-"`
+	UUID             *string `json:"uuid"`       // UUID
+	UserID           *int64  `json:"user_id"`    // user主键ID
+	VersionID        *int64  `json:"version_id"` // version主键ID
+}
+
+// UserVersionList UserVersion表列表请求参数
+type UserVersionList struct {
+	BaseRequest      `json:"-"`
+	BaseTokenRequest `json:"-"`
+	BasePagination
 }
 
 // ================================================================================
@@ -64,6 +101,6 @@ type VersionUpdate struct {
 // VersionList Version表列表请求参数
 type VersionList struct {
 	BaseRequest      `json:"-"`
-	BasePagination   `json:"-"`
 	BaseTokenRequest `json:"-"`
+	BasePagination
 }

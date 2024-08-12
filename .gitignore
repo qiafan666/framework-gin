@@ -10,5 +10,6 @@
 /.idea
 *.iml
 /.idea/
-
+*.log
+/err
 # 忽略系统生成的文件
