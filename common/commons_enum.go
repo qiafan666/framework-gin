@@ -15,13 +15,12 @@ func init() {
 
 // Error define the error code
 const (
-	Error = 9000
+	Error = 1000
 )
 
-// EnglishCodeMsg local code and msg
-
-var EnglishCodeMsg = map[commons.ResponseCode]string{
-	9000: "未知错误",
+// ChineseCodeMsg local code and msg
+var ChineseCodeMsg = map[commons.ResponseCode]string{
+	1000: "业务错误",
 }
 
 // ctx value enum

@@ -16,7 +16,7 @@ import (
 // @consumes json
 func main() {
 	server := v2.GetGotatoInstance()
-	server.RegisterErrorCodeAndMsg(commons.MsgLanguageEnglish, common.EnglishCodeMsg)
+	server.RegisterErrorCodeAndMsg(commons.MsgLanguageChinese, common.ChineseCodeMsg)
 	server.StartServer(v2.GinService, v2.DatabaseService)
 	controllers.RegisterRouter(server.App())
 	server.WaitClose()
