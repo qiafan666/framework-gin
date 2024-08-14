@@ -2,14 +2,14 @@ package common
 
 import (
 	"github.com/qiafan666/gotato/commons"
-	"github.com/qiafan666/gotato/config"
+	"github.com/qiafan666/gotato/gconfig"
 )
 
-var DebugFlag bool
+var DevEnv bool
 
 func init() {
-	if config.SC.SConfigure.Profile == "dev" {
-		DebugFlag = true
+	if gconfig.SC.SConfigure.Profile == "dev" {
+		DevEnv = true
 	}
 }
 
