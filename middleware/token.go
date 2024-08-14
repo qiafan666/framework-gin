@@ -6,7 +6,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons"
-	v2 "github.com/qiafan666/gotato/v2"
+	"github.com/qiafan666/gotato/v2"
 	"net/http"
 	"time"
 )

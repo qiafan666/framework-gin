@@ -4,7 +4,7 @@ import (
 	"context"
 	"framework-gin/dao/autoMigrate"
 	"github.com/qiafan666/gotato/commons/gmap"
-	v2 "github.com/qiafan666/gotato/v2"
+	"github.com/qiafan666/gotato/v2"
 	"gorm.io/gorm"
 	"sync"
 )
