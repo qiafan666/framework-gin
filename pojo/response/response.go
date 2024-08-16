@@ -27,7 +27,6 @@ type UserList struct {
 
 // User User列表单项内容
 type User struct {
-	ID          int64     `json:"id"`   // 主键ID
 	UUID        string    `json:"uuid"` // UUID
 	CreatedTime time.Time `json:"created_time"`
 	Name        string    `json:"name"` // 名称
@@ -57,7 +56,6 @@ type UserVersionList struct {
 
 // UserVersion UserVersion列表单项内容
 type UserVersion struct {
-	ID          int64     `json:"id"`   // 主键ID
 	UUID        string    `json:"uuid"` // UUID
 	CreatedTime time.Time `json:"created_time"`
 	UserID      int64     `json:"user_id"`    // user主键ID
@@ -87,7 +85,6 @@ type VersionList struct {
 
 // Version Version列表单项内容
 type Version struct {
-	ID          int64     `json:"id"`   // 主键ID
 	UUID        string    `json:"uuid"` // UUID
 	CreatedTime time.Time `json:"created_time"`
 	Version     string    `json:"version"` // 版本号

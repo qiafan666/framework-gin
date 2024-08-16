@@ -23,8 +23,8 @@ func init() {
 }
 
 var witheList = map[string]string{
-	"/health":         "",
-	"/v1/portal/test": "",
+	"/health":              "",
+	"/v1/portal/user/list": "",
 }
 
 func CheckToken(ctx *gin.Context) {

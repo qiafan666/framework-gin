@@ -170,8 +170,8 @@ github.com/pelletier/go-toml/v2 v2.0.8 h1:0ctb6s9mE31h0/lhu+J6OPmVeDxJn+kYnJc2jZ
 github.com/pelletier/go-toml/v2 v2.0.8/go.mod h1:vuYfssBdrU2XDZ9bYydBu6t+6a6PYNcZljzZR9VXg+4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/qiafan666/gotato v1.1.8 h1:6eaEh+KH7AuqEpDsc6sIvlOwx5lNfmVVXIwsxP/tK6s=
-github.com/qiafan666/gotato v1.1.8/go.mod h1:hwPg79KDZOzJOcbCU+KCJ0X93YK4xdQaP9B22C26A98=
+github.com/qiafan666/gotato v1.1.10 h1:EtLW1I+n0Dsw3sLoPMvGEkm+CM/Q9yro/xE1S5N2tig=
+github.com/qiafan666/gotato v1.1.10/go.mod h1:hwPg79KDZOzJOcbCU+KCJ0X93YK4xdQaP9B22C26A98=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=

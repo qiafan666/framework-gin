@@ -5,7 +5,7 @@ import (
 	"framework-gin/controllers"
 	_ "framework-gin/docs"
 	"github.com/qiafan666/gotato/commons"
-	"github.com/qiafan666/gotato/v2"
+	v2 "github.com/qiafan666/gotato/v2"
 )
 
 // @title framework API Document
