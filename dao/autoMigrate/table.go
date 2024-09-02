@@ -33,15 +33,20 @@ type BaseModel struct {
 	IsDeleted   int8      `gorm:"column:is_deleted;default:0;comment:是否删除 0-未删除 1-已删除" json:"is_deleted"` // 是否删除 0-未删除 1-已删除
 }
 
+// TableName  user
+func (s *User) TableName() string {
+	return "user"
+}
+
 type User struct {
 	BaseModel
 	Name string `gorm:"column:name;type:varchar(255);comment:名称" json:"name"`
 	Age  int32  `gorm:"column:age;comment:年龄" json:"age"`
 }
 
-// TableName .
-func (s *User) TableName() string {
-	return "user"
+// TableName  version
+func (s *Version) TableName() string {
+	return "version"
 }
 
 type Version struct {
@@ -49,17 +54,13 @@ type Version struct {
 	Version string `gorm:"column:version;type:varchar(50);comment:版本号;uniqueIndex:uix_version" json:"version"`
 }
 
-// TableName .
-func (s *Version) TableName() string {
-	return "version"
+// TableName  user_version
+func (s *UserVersion) TableName() string {
+	return "user_version"
 }
 
 type UserVersion struct {
 	BaseModel
-	UserID    int64 `gorm:"column:user_id;comment:user主键ID" json:"user_id"`
-	VersionID int64 `gorm:"column:version_id;comment:version主键ID" json:"version_id"`
-}
-
-func (s *UserVersion) TableName() string {
-	return "user_version"
+	UserID    int64 `gorm:"column:user_id;comment:user主键ID;index:idx_user_version_id" json:"user_id"`
+	VersionID int64 `gorm:"column:version_id;comment:version主键ID;index:idx_user_version_id" json:"version_id"`
 }
