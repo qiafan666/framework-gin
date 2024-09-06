@@ -37,7 +37,7 @@ func CheckToken(ctx *gin.Context) {
 		requestId = baseRequest.RequestId
 
 		//check jwt
-		parseToken, err := jwt.Parse(ctx.Request.Header.Get("Authorization"), func(token *jwt.Token) (interface{}, error) {
+		parseToken, err := jwt.Parse(ctx.Request.Header.Get(common.HeaderAuthorization), func(token *jwt.Token) (interface{}, error) {
 			return []byte(jwtConfig.JWT.Secret), nil
 		})
 		if err != nil {
@@ -63,10 +63,10 @@ func CheckToken(ctx *gin.Context) {
 
 func CreateToken(uuid string, iss string) (string, error) {
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"uuid": uuid,
-		"iss":  iss,
-		"iat":  time.Now().Unix(),
-		"exp":  time.Now().Add(time.Hour * 24 * time.Duration(jwtConfig.JWT.Expire)).Unix(),
+		common.TOKENUuid: uuid,
+		common.TOKENIss:  iss,
+		common.TOKENIat:  time.Now().Unix(),
+		common.TOKENExp:  time.Now().Add(time.Hour * 24 * time.Duration(jwtConfig.JWT.Expire)).Unix(),
 	}).SignedString([]byte(jwtConfig.JWT.Secret))
 	if err != nil {
 		return "", err

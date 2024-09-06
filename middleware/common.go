@@ -27,7 +27,7 @@ func init() {
 func Common(ctx *gin.Context) {
 
 	//get language
-	language := ctx.Request.Header.Get("Language")
+	language := ctx.Request.Header.Get(common.HeaderLanguage)
 	if language == "" {
 		language = commons.DefaultLanguage
 	}
@@ -44,13 +44,13 @@ func Common(ctx *gin.Context) {
 func Cors(ctx *gin.Context) {
 	method := ctx.Request.Method
 
-	ctx.Header("Access-Control-Allow-Origin", "*")
-	ctx.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token, x-token")
-	ctx.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PATCH, PUT")
-	ctx.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-	ctx.Header("Access-Control-Allow-Credentials", "true")
+	ctx.Header(common.HeaderAccessControlAllowOrigin, "*")
+	ctx.Header(common.HeaderAccessControlAllowHeaders, "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token, x-token")
+	ctx.Header(common.HeaderAccessControlAllowMethods, "POST, GET, OPTIONS, DELETE, PATCH, PUT")
+	ctx.Header(common.HeaderAccessControlExposeHeaders, "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
+	ctx.Header(common.HeaderAccessControlAllowCredentials, "true")
 
-	if method == "OPTIONS" {
+	if method == http.MethodOptions {
 		ctx.AbortWithStatus(http.StatusNoContent)
 	}
 	ctx.Next()

@@ -20,13 +20,13 @@ func BindAndValid(entity interface{}, ctx *gin.Context) (commons.ResponseCode, e
 
 	baseRequest := ctx.Keys[(common.BaseRequest)].(request.BaseRequest)
 	elem := object.Elem()
-	base := elem.FieldByName("BaseRequest")
+	base := elem.FieldByName(common.BaseRequest)
 	if base.Kind() != reflect.Invalid {
 		base.Set(reflect.ValueOf(baseRequest))
 	}
 
 	baseTokenRequest, _ := ctx.Keys[(common.BaseTokenRequest)].(request.BaseTokenRequest)
-	baseToken := elem.FieldByName("BaseTokenRequest")
+	baseToken := elem.FieldByName(common.BaseTokenRequest)
 	if baseToken.Kind() != reflect.Invalid {
 		baseToken.Set(reflect.ValueOf(baseTokenRequest))
 	}
