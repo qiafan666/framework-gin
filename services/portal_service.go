@@ -59,6 +59,7 @@ func (g portalServiceImp) UserList(info request.UserList) (out response.UserList
 	if err != nil {
 		return response.UserList{}, 0, err
 	}
+
 	var users []model.User
 	err = g.dao.WithContext(info.Ctx).Find([]string{}, nil, func(db *gorm.DB) *gorm.DB {
 		return db.Scopes(gcommon.Paginate(info.CurrentPage, info.PageCount))
@@ -67,16 +68,14 @@ func (g portalServiceImp) UserList(info request.UserList) (out response.UserList
 		return response.UserList{}, 0, err
 	}
 
-	var userList []response.User
-	for _, user := range users {
-		userList = append(userList, response.User{
+	out.UserList = gcommon.SliceConvert(users, func(user model.User) response.User {
+		return response.User{
 			UUID:        user.UUID,
 			Name:        user.Name,
 			Age:         user.Age,
 			CreatedTime: user.CreatedTime,
-		})
-	}
-	out.UserList = userList
+		}
+	})
 	out.CurrentPage = info.CurrentPage
 	out.PageCount = info.PageCount
 	out.Count = count

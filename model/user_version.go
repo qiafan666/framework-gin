@@ -14,7 +14,8 @@ CREATE TABLE `user_version` (
   `user_id` bigint DEFAULT NULL COMMENT 'user主键ID',
   `version_id` bigint DEFAULT NULL COMMENT 'version主键ID',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uix_uuid` (`uuid`)
+  UNIQUE KEY `uix_uuid` (`uuid`),
+  KEY `idx_user_version_id` (`user_id`,`version_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ******sql******/
 // UserVersion [...]
