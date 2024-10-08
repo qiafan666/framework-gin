@@ -7,15 +7,15 @@ import (
 /******sql******
 CREATE TABLE `user` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `uuid` varchar(50) DEFAULT NULL COMMENT 'UUID',
-  `created_time` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
-  `updated_time` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  `is_deleted` tinyint DEFAULT '0' COMMENT '是否删除 0-未删除 1-已删除',
-  `name` varchar(255) DEFAULT NULL COMMENT '名称',
-  `age` int DEFAULT NULL COMMENT '年龄',
+  `uuid` varchar(50) NOT NULL COMMENT 'UUID',
+  `created_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除 0-未删除 1-已删除',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  `age` int NOT NULL COMMENT '年龄',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uix_uuid` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ******sql******/
 // User [...]
 type User struct {

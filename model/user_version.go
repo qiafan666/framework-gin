@@ -7,12 +7,12 @@ import (
 /******sql******
 CREATE TABLE `user_version` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `uuid` varchar(50) DEFAULT NULL COMMENT 'UUID',
-  `created_time` datetime(3) DEFAULT CURRENT_TIMESTAMP(3),
-  `updated_time` datetime(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  `is_deleted` tinyint DEFAULT '0' COMMENT '是否删除 0-未删除 1-已删除',
-  `user_id` bigint DEFAULT NULL COMMENT 'user主键ID',
-  `version_id` bigint DEFAULT NULL COMMENT 'version主键ID',
+  `uuid` varchar(50) NOT NULL COMMENT 'UUID',
+  `created_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除 0-未删除 1-已删除',
+  `user_id` bigint NOT NULL COMMENT 'user主键ID',
+  `version_id` bigint NOT NULL COMMENT 'version主键ID',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uix_uuid` (`uuid`),
   KEY `idx_user_version_id` (`user_id`,`version_id`)
