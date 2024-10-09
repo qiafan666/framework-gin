@@ -7,7 +7,7 @@ option go_package = "./pb;pb";
 message ReqHealth {
   string msg = 1;
 }
-message RespHealth {
+message RspHealth {
   string msg = 1;
 }
 
