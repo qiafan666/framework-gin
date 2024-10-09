@@ -1,0 +1,13 @@
+syntax = "proto3";
+package pb;
+
+option go_package = "./pb;pb";
+
+message parseToken{
+  string userID = 1;
+  int32 platformID = 2;
+  int64 expireTimeSeconds = 3;
+}
+
+message InvalidateToken{
+}

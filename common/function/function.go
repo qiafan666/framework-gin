@@ -59,3 +59,5 @@ func GetCtx(ctx *gin.Context) context.Context {
 		return context.Background()
 	}
 }
+
+var WsCtx = context.WithValue(context.Background(), "trace_id", "【ws_ctx】")

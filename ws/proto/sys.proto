@@ -1,0 +1,13 @@
+syntax = "proto3";
+package pb;
+
+option go_package = "./pb;pb";
+
+// grp:1 cmd:1 业务流程检查
+message ReqHealth {
+  string msg = 1;
+}
+message RespHealth {
+  string msg = 1;
+}
+

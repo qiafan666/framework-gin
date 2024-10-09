@@ -1,0 +1,14 @@
+syntax = "proto3";
+package pb;
+
+option go_package = "./pb;pb";
+
+enum GRP {
+  DEF_GRP = 0;
+  SYS = 1;
+}
+
+enum SYS_CMD {
+  DEF_CMD = 0;
+  HEALTH = 1;
+}
