@@ -6,7 +6,7 @@ import (
 	"framework-gin/ws/errs"
 )
 
-var mapper = []string{constant.OperationID, constant.OpUserID, constant.OpUserPlatform, constant.ConnID}
+var mapper = []string{constant.RequestID, constant.OpUserID, constant.OpUserPlatform, constant.ConnID}
 
 func WithOpUserIDContext(ctx context.Context, opUserID string) context.Context {
 	return context.WithValue(ctx, constant.OpUserID, opUserID)
@@ -20,14 +20,14 @@ func WithTriggerIDContext(ctx context.Context, triggerID string) context.Context
 	return context.WithValue(ctx, constant.TriggerID, triggerID)
 }
 
-func NewCtx(operationID string) context.Context {
+func NewCtx(requestID string) context.Context {
 	c := context.Background()
-	ctx := context.WithValue(c, constant.OperationID, operationID)
-	return SetOperationID(ctx, operationID)
+	ctx := context.WithValue(c, constant.RequestID, requestID)
+	return SetRequestID(ctx, requestID)
 }
 
-func SetOperationID(ctx context.Context, operationID string) context.Context {
-	return context.WithValue(ctx, constant.OperationID, operationID)
+func SetRequestID(ctx context.Context, requestID string) context.Context {
+	return context.WithValue(ctx, constant.RequestID, requestID)
 }
 
 func SetOpUserID(ctx context.Context, opUserID string) context.Context {
@@ -38,9 +38,9 @@ func SetConnID(ctx context.Context, connID string) context.Context {
 	return context.WithValue(ctx, constant.ConnID, connID)
 }
 
-func GetOperationID(ctx context.Context) string {
-	if ctx.Value(constant.OperationID) != nil {
-		s, ok := ctx.Value(constant.OperationID).(string)
+func GetRequestID(ctx context.Context) string {
+	if ctx.Value(constant.RequestID) != nil {
+		s, ok := ctx.Value(constant.RequestID).(string)
 		if ok {
 			return s
 		}
@@ -98,10 +98,10 @@ func GetRemoteAddr(ctx context.Context) string {
 	return ""
 }
 
-func GetMustCtxInfo(ctx context.Context) (operationID, opUserID, platform, connID string, err error) {
-	operationID, ok := ctx.Value(constant.OperationID).(string)
+func GetMustCtxInfo(ctx context.Context) (requestID, opUserID, platform, connID string, err error) {
+	requestID, ok := ctx.Value(constant.RequestID).(string)
 	if !ok {
-		err = errs.ErrArgs.WrapMsg("ctx missing operationID")
+		err = errs.ErrArgs.WrapMsg("ctx missing requestID")
 		return
 	}
 	opUserID, ok1 := ctx.Value(constant.OpUserID).(string)
@@ -118,10 +118,10 @@ func GetMustCtxInfo(ctx context.Context) (operationID, opUserID, platform, connI
 	return
 }
 
-func GetCtxInfos(ctx context.Context) (operationID, opUserID, platform, connID string, err error) {
-	operationID, ok := ctx.Value(constant.OperationID).(string)
+func GetCtxInfos(ctx context.Context) (requestID, opUserID, platform, connID string, err error) {
+	requestID, ok := ctx.Value(constant.RequestID).(string)
 	if !ok {
-		err = errs.ErrArgs.WrapMsg("ctx missing operationID")
+		err = errs.ErrArgs.WrapMsg("ctx missing requestID")
 		return
 	}
 	opUserID, _ = ctx.Value(constant.OpUserID).(string)

@@ -1,10 +1,13 @@
 package internal
 
 import (
+	"context"
+	"framework-gin/common"
 	"framework-gin/ws/constant"
 	"framework-gin/ws/errs"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gencrypt"
+	"github.com/qiafan666/gotato/commons/glog"
 	"github.com/qiafan666/gotato/commons/gtime"
 	"net/http"
 	"net/url"
@@ -19,6 +22,7 @@ type UserConnContext struct {
 	Method     string
 	RemoteAddr string
 	ConnID     string
+	Ctx        context.Context
 }
 
 func (c *UserConnContext) Deadline() (deadline time.Time, ok bool) {
@@ -37,8 +41,8 @@ func (c *UserConnContext) Value(key any) any {
 	switch key {
 	case constant.OpUserID:
 		return c.GetUserID()
-	case constant.OperationID:
-		return c.GetOperationID()
+	case constant.RequestID:
+		return c.GetRequestID()
 	case constant.ConnID:
 		return c.GetConnID()
 	case constant.OpUserPlatform:
@@ -51,6 +55,8 @@ func (c *UserConnContext) Value(key any) any {
 }
 
 func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnContext {
+
+	ctx := glog.SetTraceId(constant.PlatformIDToName(gcast.ToInt(req.Header.Get(common.HeaderPlatformID))) + "-" + req.Header.Get(common.HeaderSendID))
 	return &UserConnContext{
 		RespWriter: respWriter,
 		Req:        req,
@@ -58,6 +64,7 @@ func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnCont
 		Method:     req.Method,
 		RemoteAddr: req.RemoteAddr,
 		ConnID:     gencrypt.Md5(req.RemoteAddr + "_" + strconv.Itoa(int(gtime.GetCurrentTimestampByMill()))),
+		Ctx:        ctx,
 	}
 }
 
@@ -73,7 +80,7 @@ func (c *UserConnContext) GetRemoteAddr() string {
 
 func (c *UserConnContext) Query(key string) (string, bool) {
 	var value string
-	if value = c.Req.URL.Query().Get(key); value == "" {
+	if value = c.Req.Header.Get(key); value == "" {
 		return value, false
 	}
 	return value, true
@@ -100,34 +107,32 @@ func (c *UserConnContext) GetConnID() string {
 }
 
 func (c *UserConnContext) GetUserID() string {
-	return c.Req.URL.Query().Get(WsUserID)
+	return c.Req.Header.Get(common.HeaderSendID)
 }
 
 func (c *UserConnContext) GetPlatformID() string {
-	return c.Req.URL.Query().Get(PlatformID)
+	return c.Req.Header.Get(common.HeaderPlatformID)
 }
 
-func (c *UserConnContext) GetOperationID() string {
-	return c.Req.URL.Query().Get(OperationID)
+func (c *UserConnContext) GetRequestID() string {
+	return c.Req.Header.Get(common.RequestID)
 }
 
-func (c *UserConnContext) SetOperationID(operationID string) {
-	values := c.Req.URL.Query()
-	values.Set(OperationID, operationID)
-	c.Req.URL.RawQuery = values.Encode()
+func (c *UserConnContext) SetRequestID(requestID string) {
+	c.Req.Header.Set(common.RequestID, requestID)
 }
 
 func (c *UserConnContext) GetToken() string {
-	return c.Req.URL.Query().Get(Token)
+	return c.Req.Header.Get(common.HeaderAuthorization)
 }
 
 func (c *UserConnContext) GetCompression() bool {
-	compression, exists := c.Query(Compression)
-	if exists && compression == GzipCompressionProtocol {
+	compression, exists := c.Query(common.HeaderCompression)
+	if exists && compression == common.CompressionGzip {
 		return true
 	} else {
-		compression, exists = c.GetHeader(Compression)
-		if exists && compression == GzipCompressionProtocol {
+		compression, exists = c.GetHeader(common.HeaderCompression)
+		if exists && compression == common.CompressionGzip {
 			return true
 		}
 	}
@@ -135,7 +140,7 @@ func (c *UserConnContext) GetCompression() bool {
 }
 
 func (c *UserConnContext) ShouldSendResp() bool {
-	errResp, exists := c.Query(SendResponse)
+	errResp, exists := c.GetHeader(common.HeaderSendResponse)
 	if exists {
 		b, err := strconv.ParseBool(errResp)
 		if err != nil {
@@ -148,19 +153,19 @@ func (c *UserConnContext) ShouldSendResp() bool {
 }
 
 func (c *UserConnContext) SetToken(token string) {
-	c.Req.URL.RawQuery = Token + "=" + token
+	c.Req.Header.Set(common.HeaderAuthorization, token)
 }
 
 func (c *UserConnContext) ParseEssentialArgs() error {
-	_, exists := c.Query(Token)
+	_, exists := c.GetHeader(common.HeaderAuthorization)
 	if !exists {
 		return errs.ErrConnArgsErr.WrapMsg("token is empty")
 	}
-	_, exists = c.Query(WsUserID)
+	_, exists = c.GetHeader(common.HeaderSendID)
 	if !exists {
 		return errs.ErrConnArgsErr.WrapMsg("sendID is empty")
 	}
-	platformIDStr, exists := c.Query(PlatformID)
+	platformIDStr, exists := c.GetHeader(common.HeaderPlatformID)
 	if !exists {
 		return errs.ErrConnArgsErr.WrapMsg("platformID is empty")
 	}

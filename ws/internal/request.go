@@ -10,7 +10,7 @@ type IRequest interface {
 	SetProtoMessage(proto.Message)
 	GetGrp() uint8
 	GetCmd() uint8
-	GetOperationID() string
+	GetRequestID() string
 	GetData() []byte
 }
 
@@ -42,8 +42,8 @@ func (r *Request) GetData() []byte {
 }
 
 // GetOperateID 获取操作ID
-func (r *Request) GetOperationID() string {
-	return r.msg.OperationID
+func (r *Request) GetRequestID() string {
+	return r.msg.RequestID
 }
 
 // ProtoMessage 获取pb协议消息

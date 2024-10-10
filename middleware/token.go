@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"framework-gin/common"
 	"framework-gin/pojo/request"
 	"github.com/dgrijalva/jwt-go"
@@ -23,6 +24,7 @@ func init() {
 }
 
 var witheList = map[string]string{
+	"/ws":                  "",
 	"/health":              "",
 	"/v1/portal/user/list": "",
 }
@@ -37,23 +39,14 @@ func CheckToken(ctx *gin.Context) {
 		requestId = baseRequest.RequestId
 
 		//check jwt
-		parseToken, err := jwt.Parse(ctx.Request.Header.Get(common.HeaderAuthorization), func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtConfig.JWT.Secret), nil
-		})
-		if err != nil {
+		resultMap, err := ParseToken(ctx.Request.Header.Get(common.HeaderAuthorization))
+		if err != nil || len(resultMap) == 0 {
 			ctx.JSON(http.StatusOK, commons.BuildFailed(commons.TokenError, language, requestId))
 			ctx.Abort()
 			return
 		}
 
-		if _, ok = parseToken.Claims.(jwt.MapClaims); ok && parseToken.Valid {
-			//TODO 查询用户信息
-		} else {
-			ctx.JSON(http.StatusOK, commons.BuildFailed(commons.TokenError, language, requestId))
-			ctx.Abort()
-			return
-		}
-
+		//todo 获取用户信息
 	}
 
 	ctx.Set(common.BaseTokenRequest, request.BaseTokenRequest{})
@@ -61,6 +54,7 @@ func CheckToken(ctx *gin.Context) {
 	ctx.Next()
 }
 
+// CreateToken 创建token
 func CreateToken(uuid string, iss string) (string, error) {
 	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		common.TOKENUuid: uuid,
@@ -72,4 +66,21 @@ func CreateToken(uuid string, iss string) (string, error) {
 		return "", err
 	}
 	return token, nil
+}
+
+// ParseToken 解析token
+func ParseToken(token string) (result map[string]interface{}, err error) {
+
+	parseToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		return []byte(jwtConfig.JWT.Secret), nil
+	})
+	if err != nil {
+		return result, err
+	}
+	if _, ok := parseToken.Claims.(jwt.MapClaims); ok && parseToken.Valid {
+		result[common.TOKENUuid] = parseToken.Claims
+	} else {
+		return result, errors.New("token parse error")
+	}
+	return result, nil
 }

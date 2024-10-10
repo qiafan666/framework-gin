@@ -62,7 +62,7 @@ func (s *Subscription) DelClient(client *Client) {
 	if len(userIDs) == 0 {
 		return
 	}
-	addr := client.ctx.GetRemoteAddr()
+	addr := client.userCtx.GetRemoteAddr()
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	for _, userID := range userIDs {
@@ -119,7 +119,7 @@ func (s *Subscription) Sub(client *Client, addUserIDs, delUserIDs []string) {
 	if len(del)+len(add) == 0 {
 		return
 	}
-	addr := client.ctx.GetRemoteAddr()
+	addr := client.userCtx.GetRemoteAddr()
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	for userID := range del {

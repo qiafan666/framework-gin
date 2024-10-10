@@ -36,7 +36,7 @@ const (
 
 // UserContext 相关常量
 const (
-	OperationID     = "operationID"
+	RequestID       = "requestID"
 	OpUserID        = "opUserID"
 	ConnID          = "connID"
 	OpUserPlatform  = "platform"

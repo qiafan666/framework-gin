@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"framework-gin/dao/autoMigrate"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/v2"
 	"gorm.io/gorm"
@@ -157,7 +156,7 @@ func Instance() Dao {
 		db = v2.GetGotatoInstance().FeatureDB("test").GormDB()
 	})
 
-	autoMigrate.CreateTables(db)
+	//autoMigrate.CreateTables(db)
 	//默认is_deleted=0条件
 	defaultWhere := map[string]interface{}{
 		"is_deleted": 0,

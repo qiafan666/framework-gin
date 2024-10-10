@@ -1,6 +1,8 @@
 package common
 
-import "github.com/qiafan666/gotato/gconfig"
+import (
+	"github.com/qiafan666/gotato/gconfig"
+)
 
 var DevEnv bool
 
@@ -12,14 +14,18 @@ func init() {
 
 // ctx value enum
 const (
-	BaseRequest      = "base_request"
-	BaseTokenRequest = "base_token_request"
+	BaseRequest      = "BaseRequest"
+	BaseTokenRequest = "BaseTokenRequest"
 )
 
 // header value enum
 const (
 	HeaderAuthorization                 = "Authorization"
 	HeaderLanguage                      = "Language"
+	HeaderSendID                        = "SendID"
+	HeaderPlatformID                    = "PlatformID"
+	HeaderCompression                   = "Compression"
+	HeaderSendResponse                  = "SendResponse"
 	HeaderAccessControlAllowOrigin      = "Access-Control-Allow-Origin"
 	HeaderAccessControlAllowMethods     = "Access-Control-Allow-Methods"
 	HeaderAccessControlAllowHeaders     = "Access-Control-Allow-Headers"
@@ -33,4 +39,10 @@ const (
 	TOKENIss  = "iss"
 	TOKENIat  = "iat"
 	TOKENExp  = "exp"
+)
+
+// 常量定义
+const (
+	CompressionGzip = "gzip"
+	RequestID       = "requestID"
 )

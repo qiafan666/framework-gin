@@ -53,11 +53,11 @@ func GetTraceId(ctx *gin.Context) string {
 	}
 }
 func GetCtx(ctx *gin.Context) context.Context {
-	if ctx, ok := ctx.Value("ctx").(context.Context); ok {
-		return ctx
+	if v, ok := ctx.Value("ctx").(context.Context); ok {
+		return v
 	} else {
 		return context.Background()
 	}
 }
 
-var WsCtx = context.WithValue(context.Background(), "trace_id", "【ws_ctx】")
+var WsCtx = context.WithValue(context.Background(), "trace_id", "ws_ctx")

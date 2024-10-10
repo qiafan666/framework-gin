@@ -11,23 +11,17 @@ import (
 )
 
 type Req struct {
-	//ReqIdentifier int32  `json:"reqIdentifier" validate:"required"`
-	//Token       string `json:"token"`
-	SendID      string `json:"sendID"        validate:"required"`
-	OperationID string `json:"operationID"   validate:"required"`
-	//MsgIncr       string `json:"msgIncr"       validate:"required"`
-	GrpID uint8  `json:"grpID" validate:"required"` // 消息组id
-	CmdID uint8  `json:"cmdID" validate:"required"` // 消息的ID
-	Data  []byte `json:"data"`
+	SendID    string `json:"sendID"        validate:"required"`
+	RequestID string `json:"requestID"   validate:"required"`
+	GrpID     uint8  `json:"grpID" validate:"required"` // 消息组id
+	CmdID     uint8  `json:"cmdID" validate:"required"` // 消息的ID
+	Data      []byte `json:"data"`
 }
 
 func (r *Req) String() string {
 	var tReq Req
-	//tReq.ReqIdentifier = r.ReqIdentifier
-	//tReq.Token = r.Token
 	tReq.SendID = r.SendID
-	tReq.OperationID = r.OperationID
-	//tReq.MsgIncr = r.MsgIncr
+	tReq.RequestID = r.RequestID
 	tReq.GrpID = r.GrpID
 	tReq.CmdID = r.CmdID
 	tReq.Data = r.Data
@@ -43,11 +37,8 @@ var reqPool = sync.Pool{
 func getReq() *Req {
 	req := reqPool.Get().(*Req)
 	req.Data = nil
-	//req.MsgIncr = ""
-	req.OperationID = ""
-	//req.ReqIdentifier = 0
+	req.RequestID = ""
 	req.SendID = ""
-	//req.Token = ""
 	req.GrpID = 0
 	req.CmdID = 0
 	return req
@@ -58,21 +49,17 @@ func freeReq(req *Req) {
 }
 
 type Resp struct {
-	//ReqIdentifier int32  `json:"reqIdentifier"`
-	//MsgIncr       string `json:"msgIncr"`
-	GrpID       uint8         `json:"grp_id"`
-	CmdID       uint8         `json:"cmd_id"`
-	OperationID string        `json:"operation_id"`
-	Code        int           `json:"code"`
-	Msg         string        `json:"msg"`
-	Data        proto.Message `json:"data"`
+	GrpID     uint8         `json:"grp_id"`
+	CmdID     uint8         `json:"cmd_id"`
+	RequestID string        `json:"request_id"`
+	Code      int           `json:"code"`
+	Msg       string        `json:"msg"`
+	Data      proto.Message `json:"data"`
 }
 
 func (r *Resp) String() string {
 	var tResp Resp
-	//tResp.ReqIdentifier = r.ReqIdentifier
-	//tResp.MsgIncr = r.MsgIncr
-	tResp.OperationID = r.OperationID
+	tResp.RequestID = r.RequestID
 	tResp.Code = r.Code
 	tResp.Msg = r.Msg
 	tResp.GrpID = r.GrpID
@@ -88,7 +75,7 @@ type IRouter interface {
 }
 
 // HandlerFunc 消息处理函数
-type HandlerFunc func(req proto.Message) (proto.Message, error)
+type HandlerFunc func(ctx context.Context, req proto.Message) (proto.Message, error)
 
 type Handler struct {
 	f   HandlerFunc   // 业务处理函数
@@ -135,7 +122,7 @@ func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) (proto.Message, 
 	}
 
 	// 执行业务
-	return h.f(dataReq)
+	return h.f(ctx, dataReq)
 }
 
 // AddHandler 为消息添加具体的处理逻辑
@@ -151,10 +138,6 @@ func (m *MsgHandle) AddHandler(grp, cmd uint8, req, rsp proto.Message, f Handler
 		req: req,
 		rsp: rsp,
 	}
-	// 3 添加返回pb route
-	//if rsp != nil {
-	//	AddRoute(grp, cmd, rsp)
-	//}
 }
 
 // Close 关闭
@@ -166,161 +149,3 @@ func (m *MsgHandle) Close() error {
 func genMsgID(grp, cmd uint8) uint32 {
 	return uint32(grp)*1000 + uint32(cmd)
 }
-
-// ------------------------ route ------------------------
-
-//type MessageID struct {
-//	grp uint8
-//	cmd uint8
-//}
-//
-//var route map[reflect.Type]*MessageID // key:msg type, val: grp+cmd
-//
-//func init() {
-//	route = make(map[reflect.Type]*MessageID)
-//}
-//
-//func AddRoute(grp, cmd uint8, msg proto.Message) {
-//	Type := reflect.TypeOf(msg)
-//	if _, ok := route[Type]; ok {
-//		glog.Slog.Printf("add route had add")
-//	}
-//	route[Type] = &MessageID{grp: grp, cmd: cmd}
-//}
-//
-//func MsgID(msg proto.Message) (grp uint8, cmd uint8) {
-//	Type := reflect.TypeOf(msg)
-//	if route[Type] != nil {
-//		grp, cmd = route[Type].grp, route[Type].cmd
-//	}
-//	return
-//}
-
-//type MessageHandler interface {
-//	GetSeq(context context.Context, data *Req) ([]byte, error)
-//	SendMessage(context context.Context, data *Req) ([]byte, error)
-//	SendSignalMessage(context context.Context, data *Req) ([]byte, error)
-//	PullMessageBySeqList(context context.Context, data *Req) ([]byte, error)
-//	UserLogout(context context.Context, data *Req) ([]byte, error)
-//	SetUserDeviceBackground(context context.Context, data *Req) ([]byte, bool, error)
-//}
-//
-//var _ MessageHandler = (*GrpcHandler)(nil)
-//
-//type GrpcHandler struct {
-//	msgRpcClient *rpcclient.MessageRpcClient
-//	pushClient   *rpcclient.PushRpcClient
-//	validate     *validator.Validate
-//}
-//
-//func NewGrpcHandler(validate *validator.Validate, client discovery.SvcDiscoveryRegistry, rpcRegisterName *config.RpcRegisterName) *GrpcHandler {
-//	msgRpcClient := rpcclient.NewMessageRpcClient(client, rpcRegisterName.Msg)
-//	pushRpcClient := rpcclient.NewPushRpcClient(client, rpcRegisterName.Push)
-//	return &GrpcHandler{
-//		msgRpcClient: &msgRpcClient,
-//		pushClient:   &pushRpcClient, validate: validate,
-//	}
-//}
-//
-//func (g GrpcHandler) GetSeq(ctx context.Context, data *Req) ([]byte, error) {
-//	req := sdkws.GetMaxSeqReq{}
-//	if err := proto.Unmarshal(data.Data, &req); err != nil {
-//		return nil, gerr.WrapMsg(err, "GetSeq: error unmarshaling request", "action", "unmarshal", "dataType", "GetMaxSeqReq")
-//	}
-//	if err := g.validate.Struct(&req); err != nil {
-//		return nil, gerr.WrapMsg(err, "GetSeq: validation failed", "action", "validate", "dataType", "GetMaxSeqReq")
-//	}
-//	resp, err := g.msgRpcClient.GetMaxSeq(ctx, &req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	c, err := proto.Marshal(resp)
-//	if err != nil {
-//		return nil, gerr.WrapMsg(err, "GetSeq: error marshaling response", "action", "marshal", "dataType", "GetMaxSeqResp")
-//	}
-//	return c, nil
-//}
-//
-//// SendMessage handles the sending of messages through gRPC. It unmarshals the request data,
-//// validates the message, and then sends it using the message RPC client.
-//func (g GrpcHandler) SendMessage(ctx context.Context, data *Req) ([]byte, error) {
-//	var msgData sdkws.MsgData
-//	if err := proto.Unmarshal(data.Data, &msgData); err != nil {
-//		return nil, gerr.WrapMsg(err, "SendMessage: error unmarshaling message data", "action", "unmarshal", "dataType", "MsgData")
-//	}
-//
-//	if err := g.validate.Struct(&msgData); err != nil {
-//		return nil, gerr.WrapMsg(err, "SendMessage: message data validation failed", "action", "validate", "dataType", "MsgData")
-//	}
-//
-//	req := msg.SendMsgReq{MsgData: &msgData}
-//	resp, err := g.msgRpcClient.SendMsg(ctx, &req)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	c, err := proto.Marshal(resp)
-//	if err != nil {
-//		return nil, gerr.WrapMsg(err, "SendMessage: error marshaling response", "action", "marshal", "dataType", "SendMsgResp")
-//	}
-//
-//	return c, nil
-//}
-//
-//func (g GrpcHandler) SendSignalMessage(context context.Context, data *Req) ([]byte, error) {
-//	resp, err := g.msgRpcClient.SendMsg(context, nil)
-//	if err != nil {
-//		return nil, err
-//	}
-//	c, err := proto.Marshal(resp)
-//	if err != nil {
-//		return nil, gerr.WrapMsg(err, "error marshaling response", "action", "marshal", "dataType", "SendMsgResp")
-//	}
-//	return c, nil
-//}
-//
-//func (g GrpcHandler) PullMessageBySeqList(context context.Context, data *Req) ([]byte, error) {
-//	req := sdkws.PullMessageBySeqsReq{}
-//	if err := proto.Unmarshal(data.Data, &req); err != nil {
-//		return nil, gerr.WrapMsg(err, "error unmarshaling request", "action", "unmarshal", "dataType", "PullMessageBySeqsReq")
-//	}
-//	if err := g.validate.Struct(data); err != nil {
-//		return nil, gerr.WrapMsg(err, "validation failed", "action", "validate", "dataType", "PullMessageBySeqsReq")
-//	}
-//	resp, err := g.msgRpcClient.PullMessageBySeqList(context, &req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	c, err := proto.Marshal(resp)
-//	if err != nil {
-//		return nil, gerr.WrapMsg(err, "error marshaling response", "action", "marshal", "dataType", "PullMessageBySeqsResp")
-//	}
-//	return c, nil
-//}
-//
-//func (g GrpcHandler) UserLogout(context context.Context, data *Req) ([]byte, error) {
-//	req := push.DelUserPushTokenReq{}
-//	if err := proto.Unmarshal(data.Data, &req); err != nil {
-//		return nil, gerr.WrapMsg(err, "error unmarshaling request", "action", "unmarshal", "dataType", "DelUserPushTokenReq")
-//	}
-//	resp, err := g.pushClient.DelUserPushToken(context, &req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	c, err := proto.Marshal(resp)
-//	if err != nil {
-//		return nil, gerr.WrapMsg(err, "error marshaling response", "action", "marshal", "dataType", "DelUserPushTokenResp")
-//	}
-//	return c, nil
-//}
-//
-//func (g GrpcHandler) SetUserDeviceBackground(_ context.Context, data *Req) ([]byte, bool, error) {
-//	req := sdkws.SetAppBackgroundStatusReq{}
-//	if err := proto.Unmarshal(data.Data, &req); err != nil {
-//		return nil, false, gerr.WrapMsg(err, "error unmarshaling request", "action", "unmarshal", "dataType", "SetAppBackgroundStatusReq")
-//	}
-//	if err := g.validate.Struct(data); err != nil {
-//		return nil, false, gerr.WrapMsg(err, "validation failed", "action", "validate", "dataType", "SetAppBackgroundStatusReq")
-//	}
-//	return nil, req.IsBackground, nil
-//}

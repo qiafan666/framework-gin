@@ -13,5 +13,7 @@ func Register(r *gin.Engine) {
 	routes.RegisterSysRoutes()
 
 	longServer := internal.NewWsServer()
+
+	go longServer.ChangeOnlineStatus(4)
 	longServer.Run(r)
 }

@@ -143,12 +143,12 @@ func (u *userMap) DeleteClients(userID string, clients []*Client) (isDeleteUser 
 	}
 	offline := make([]int32, 0, len(clients))
 	deleteAddr := gcommon.SliceSetAny(clients, func(client *Client) string {
-		return client.ctx.GetRemoteAddr()
+		return client.userCtx.GetRemoteAddr()
 	})
 	tmp := result.Clients
 	result.Clients = result.Clients[:0]
 	for _, client := range tmp {
-		if _, delCli := deleteAddr[client.ctx.GetRemoteAddr()]; delCli {
+		if _, delCli := deleteAddr[client.userCtx.GetRemoteAddr()]; delCli {
 			offline = append(offline, int32(client.PlatformID))
 		} else {
 			result.Clients = append(result.Clients, client)

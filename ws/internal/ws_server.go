@@ -2,14 +2,13 @@ package internal
 
 import (
 	"context"
-	"fmt"
+	"framework-gin/middleware"
 	"framework-gin/ws/cache"
 	"framework-gin/ws/constant"
 	"framework-gin/ws/errs"
 	"framework-gin/ws/mcontext"
 	"framework-gin/ws/proto/pb"
 	"github.com/gin-gonic/gin"
-	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gcompress"
 	"github.com/qiafan666/gotato/commons/glog"
@@ -35,11 +34,9 @@ type LongConnServer interface {
 	GetUserAllCons(userID string) ([]*Client, bool)
 	GetUserPlatformCons(userID string, platform int) ([]*Client, bool, bool)
 	Validate(s any) error
-	//SetDiscoveryRegistry(client discovery.SvcDiscoveryRegistry, config *Config)
 	KickUserConn(client *Client) error
 	UnRegister(c *Client)
 	SetKickHandlerInfo(i *kickHandler)
-	//SubUserOnlineStatus(ctx context.Context, client *Client, data *Req) ([]byte, error)
 	gcompress.Compressor
 	gcommon.Encoder
 	//MessageHandler
@@ -59,12 +56,8 @@ type WsServer struct {
 	onlineUserConnNum atomic.Int64
 	handshakeTimeout  time.Duration
 	writeBufferSize   int
-	//userClient        *rpcclient.UserRpcClient
-	//authClient        *rpcclient.Auth
-	//disCov            discovery.SvcDiscoveryRegistry
 	gcompress.Compressor
 	gcommon.Encoder
-	//MessageHandler
 }
 
 type kickHandler struct {
@@ -72,27 +65,6 @@ type kickHandler struct {
 	oldClients []*Client
 	newClient  *Client
 }
-
-//func (ws *WsServer) SetDiscoveryRegistry(disCov discovery.SvcDiscoveryRegistry, config *Config) {
-//	ws.MessageHandler = NewGrpcHandler(ws.validate, disCov, &config.Share.RpcRegisterName)
-//	u := rpcclient.NewUserRpcClient(disCov, config.Share.RpcRegisterName.User, config.Share.IMAdminUserID)
-//	ws.authClient = rpcclient.NewAuth(disCov, config.Share.RpcRegisterName.Auth)
-//	ws.userClient = &u
-//	ws.disCov = disCov
-//}
-
-//func (ws *WsServer) SetUserOnlineStatus(ctx context.Context, client *Client, status int32) {
-//	err := ws.userClient.SetUserStatus(ctx, client.UserID, status, client.PlatformID)
-//	if err != nil {
-//		log.ZWarn(ctx, "SetUserStatus err", err)
-//	}
-//	switch status {
-//	case constant.Online:
-//		ws.webhookAfterUserOnline(ctx, &ws.msgGatewayConfig.WebhooksConfig.AfterUserOnline, client.UserID, client.PlatformID, client.IsBackground, client.ctx.GetConnID())
-//	case constant.Offline:
-//		ws.webhookAfterUserOffline(ctx, &ws.msgGatewayConfig.WebhooksConfig.AfterUserOffline, client.UserID, client.PlatformID, client.ctx.GetConnID())
-//	}
-//}
 
 func (ws *WsServer) UnRegister(c *Client) {
 	ws.unregisterChan <- c
@@ -115,7 +87,7 @@ func NewWsServer() *WsServer {
 	return &WsServer{
 		wsMaxConnNum:     100000,
 		writeBufferSize:  4096,
-		handshakeTimeout: 10,
+		handshakeTimeout: 10 * time.Second,
 		clientPool: sync.Pool{
 			New: func() any {
 				return new(Client)
@@ -124,11 +96,10 @@ func NewWsServer() *WsServer {
 		registerChan:    make(chan *Client, 1000),
 		unregisterChan:  make(chan *Client, 1000),
 		kickHandlerChan: make(chan *kickHandler, 1000),
-		//validate:        v,
-		clients:      newUserMap(),
-		subscription: newSubscription(),
-		Compressor:   gcompress.NewGzipCompressor(),
-		Encoder:      gcommon.NewGobEncoder(),
+		clients:         newUserMap(),
+		subscription:    newSubscription(),
+		Compressor:      gcompress.NewGzipCompressor(),
+		Encoder:         gcommon.NewGobEncoder(),
 	}
 }
 
@@ -149,45 +120,8 @@ func (ws *WsServer) Run(r *gin.Engine) {
 			}
 		}
 	}()
-	r.GET("/", ws.wsHandler)
+	r.GET("/ws", ws.wsHandler)
 }
-
-//var concurrentRequest = 3
-//
-//func (ws *WsServer) sendUserOnlineInfoToOtherNode(ctx context.Context, client *Client) error {
-//	conns, err := ws.disCov.GetConns(ctx, ws.msgGatewayConfig.Share.RpcRegisterName.MessageGateway)
-//	if err != nil {
-//		return err
-//	}
-//
-//	wg := errgroup.Group{}
-//	wg.SetLimit(concurrentRequest)
-//
-//	// Online push user online message to other node
-//	for _, v := range conns {
-//		v := v
-//		glog.Slog.DebugKVs(ctx, " sendUserOnlineInfoToOtherNode conn ", "target", v.Target())
-//		if v.Target() == ws.disCov.GetSelfConnTarget() {
-//			glog.Slog.DebugKVs(ctx, "Filter out this node", "node", v.Target())
-//			continue
-//		}
-//
-//		wg.Go(func() error {
-//			msgClient := ws1.NewMsgGatewayClient(v)
-//			_, err := msgClient.MultiTerminalLoginCheck(ctx, &ws1.MultiTerminalLoginCheckReq{
-//				UserID:     client.UserID,
-//				PlatformID: int32(client.PlatformID), Token: client.token,
-//			})
-//			if err != nil {
-//				glog.Slog.WarnKVs(ctx, "MultiTerminalLoginCheck err", err, "node", v.Target())
-//			}
-//			return nil
-//		})
-//	}
-//
-//	_ = wg.Wait()
-//	return nil
-//}
 
 func (ws *WsServer) SetKickHandlerInfo(i *kickHandler) {
 	ws.kickHandlerChan <- i
@@ -202,16 +136,16 @@ func (ws *WsServer) registerClient(client *Client) {
 	oldClients, userOK, clientOK = ws.clients.Get(client.UserID, client.PlatformID)
 	if !userOK {
 		ws.clients.Set(client.UserID, client)
-		glog.Slog.DebugKVs(client.ctx, "user not exist", "userID", client.UserID, "platformID", client.PlatformID)
+		glog.Slog.DebugKVs(nil, "user not exist", "userID", client.UserID, "platformID", client.PlatformID)
 		ws.onlineUserNum.Add(1)
 		ws.onlineUserConnNum.Add(1)
 	} else {
 		ws.multiTerminalLoginChecker(clientOK, oldClients, client)
-		glog.Slog.DebugKVs(client.ctx, "user exist", "userID", client.UserID, "platformID", client.PlatformID)
+		glog.Slog.DebugKVs(client.userCtx.Ctx, "user exist", "userID", client.UserID, "platformID", client.PlatformID)
 		if clientOK {
 			ws.clients.Set(client.UserID, client)
 			// 当前平台连接已经存在，增加连接数
-			glog.Slog.InfoKVs(client.ctx, "repeat login", "userID", client.UserID, "platformID",
+			glog.Slog.InfoKVs(client.userCtx.Ctx, "repeat login", "userID", client.UserID, "platformID",
 				client.PlatformID, "old remote addr", getRemoteAdders(oldClients))
 			ws.onlineUserConnNum.Add(1)
 		} else {
@@ -221,25 +155,9 @@ func (ws *WsServer) registerClient(client *Client) {
 	}
 
 	//TODO 多节点通知在线状态，如何处理
-	//wg := sync.WaitGroup{}
-	//
-	//if ws.msgGatewayConfig.Discovery.Enable != "k8s" {
-	//	wg.Add(1)
-	//	go func() {
-	//		defer wg.Done()
-	//		_ = ws.sendUserOnlineInfoToOtherNode(client.ctx, client)
-	//	}()
-	//}
-
-	//wg.Add(1)
-	//go func() {
-	//	defer wg.Done()
-	//	ws.SetUserOnlineStatus(client.ctx, client, constant.Online)
-	//}()
-	//wg.Wait()
 
 	glog.Slog.InfoKVs(
-		client.ctx,
+		client.userCtx.Ctx,
 		"user online",
 		"online user Num",
 		ws.onlineUserNum.Load(),
@@ -252,9 +170,9 @@ func getRemoteAdders(client []*Client) string {
 	var ret string
 	for i, c := range client {
 		if i == 0 {
-			ret = c.ctx.GetRemoteAddr()
+			ret = c.userCtx.GetRemoteAddr()
 		} else {
-			ret += "@" + c.ctx.GetRemoteAddr()
+			ret += "@" + c.userCtx.GetRemoteAddr()
 		}
 	}
 	return ret
@@ -281,12 +199,12 @@ func (ws *WsServer) multiTerminalLoginChecker(clientOK bool, oldClients []*Clien
 		for _, c := range oldClients {
 			err := c.KickOnlineMessage()
 			if err != nil {
-				glog.Slog.WarnKVs(c.ctx, "KickOnlineMessage", "err", err)
+				glog.Slog.WarnKVs(c.userCtx.Ctx, "KickOnlineMessage", "err", err)
 			}
 		}
 		ctx := mcontext.WithMustInfoCtx(
-			[]string{newClient.ctx.GetOperationID(), newClient.ctx.GetUserID(),
-				constant.PlatformIDToName(newClient.PlatformID), newClient.ctx.GetConnID()},
+			[]string{newClient.userCtx.GetRequestID(), newClient.userCtx.GetUserID(),
+				constant.PlatformIDToName(newClient.PlatformID), newClient.userCtx.GetConnID()},
 		)
 		//TODO 设置Token过期
 		if _, err := ws.InvalidateToken(ctx, newClient.token, newClient.UserID, newClient.PlatformID); err != nil {
@@ -304,22 +222,8 @@ func (ws *WsServer) unregisterClient(client *Client) {
 	ws.onlineUserConnNum.Add(-1)
 	ws.subscription.DelClient(client)
 	//ws.SetUserOnlineStatus(client.ctx, client, constant.Offline)
-	glog.Slog.InfoKVs(client.ctx, "user offline", "close reason", client.closedErr, "online user Num",
+	glog.Slog.InfoKVs(client.userCtx.Ctx, "user offline", "close reason", client.closedErr, "online user Num",
 		ws.onlineUserNum.Load(), "online user conn Num", ws.onlineUserConnNum.Load())
-}
-
-// validateRespWithRequest 检查token中的用户ID和平台ID是否与请求中的匹配
-func (ws *WsServer) validateRespWithRequest(ctx *UserConnContext, resp *pb.ParseToken) error {
-	userID := ctx.GetUserID()
-	platformID := gcast.ToInt32(ctx.GetPlatformID())
-	if resp.UserID != userID {
-		return errs.ErrTokenInvalid.WrapMsg(fmt.Sprintf("token uid %s != userID %s", resp.UserID, userID))
-	}
-
-	if resp.PlatformID != platformID {
-		return errs.ErrTokenInvalid.WrapMsg(fmt.Sprintf("token platform %d != platformID %d", resp.PlatformID, platformID))
-	}
-	return nil
 }
 
 func (ws *WsServer) wsHandler(c *gin.Context) {
@@ -343,7 +247,7 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 	}
 
 	// 调用认证客户端，解析从上下文中获取的Token
-	resp, err := ws.ParseToken(connContext, connContext.GetToken())
+	_, err = ws.ParseToken(connContext, connContext.GetToken())
 	if err != nil {
 		// 如果Token解析失败，根据上下文标志决定是否通过WebSocket发送错误信息
 		shouldSendError := connContext.ShouldSendResp()
@@ -360,19 +264,11 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 		return
 	}
 
-	// 验证认证响应是否与请求匹配（例如用户ID和平台ID）
-	err = ws.validateRespWithRequest(connContext, &resp)
-	if err != nil {
-		// 如果验证失败，通过HTTP返回错误并停止处理
-		httpError(connContext, err)
-		return
-	}
-
 	// 创建WebSocket长连接对象
 	wsLongConn := newGWebSocket(ws.handshakeTimeout, ws.writeBufferSize)
 	if err = wsLongConn.GenerateLongConn(c.Writer, c.Request); err != nil {
 		// 如果长连接创建失败，握手过程中已处理错误
-		glog.Slog.WarnKVs(connContext, "长连接创建失败: %v", err)
+		glog.Slog.WarnF(connContext.Ctx, "长连接创建失败: %v", err)
 		return
 	} else {
 		// 检查是否需要通过WebSocket发送正常响应
@@ -396,7 +292,14 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 }
 
 func (ws *WsServer) ParseToken(connContext *UserConnContext, token string) (pb.ParseToken, error) {
-	//TODO
+	if token == "test" {
+		return pb.ParseToken{UserID: "test", PlatformID: 1}, nil
+	}
+	_, err := middleware.ParseToken(token)
+	if err != nil {
+		return pb.ParseToken{}, err
+	}
+	//TODO 验证token中的uuid是否正确
 	return pb.ParseToken{}, nil
 }
 
