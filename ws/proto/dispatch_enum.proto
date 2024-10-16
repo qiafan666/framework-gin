@@ -6,9 +6,16 @@ option go_package = "./pb;pb";
 enum GRP {
   DEF_GRP = 0;
   SYS = 1;
+  LOGIC = 2;
 }
 
 enum SYS_CMD {
   DEF_CMD = 0;
+  SUBUSERONLINESTATUS = 1;
+  KICKONLINEUSER = 2;
+}
+
+enum LOGIC_CMD {
+  DEF_LOGIC_CMD = 0;
   HEALTH = 1;
 }

@@ -12,6 +12,9 @@ message parseToken{
 message InvalidateToken{
 }
 
+message setUserOnlineStatusReq {
+  repeated userOnlineStatus status = 1;
+}
 message userOnlineStatus {
   string userID = 1;
   string connID = 2;
@@ -19,6 +22,4 @@ message userOnlineStatus {
   repeated int32 offline = 4;
 }
 
-message setUserOnlineStatusReq {
-  repeated userOnlineStatus status = 1;
-}
+

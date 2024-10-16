@@ -9,13 +9,13 @@ import (
 	"github.com/qiafan666/gotato/commons/glog"
 )
 
-func RegisterSysRoutes() {
+func RegisterLogicRoutes() {
 	handler := internal.GetMsgHandler()
-	handler.AddHandler(uint8(pb.GRP_SYS), uint8(pb.SYS_CMD_HEALTH), &pb.ReqHealth{}, &pb.RspHealth{}, HealthHandler)
+	handler.AddHandler(uint8(pb.GRP_LOGIC), uint8(pb.LOGIC_CMD_HEALTH), &pb.ReqHealth{}, &pb.RspHealth{}, HealthHandler)
 }
 
 // HealthHandler 健康检查
-func HealthHandler(ctx context.Context, req proto.Message) (proto.Message, error) {
+func HealthHandler(ctx context.Context, req proto.Message) ([]byte, error) {
 	glog.Slog.DebugF(ctx, "req: %v", req)
 
 	// 将 proto.Message 转换为 *pb.ReqHealth
@@ -23,8 +23,7 @@ func HealthHandler(ctx context.Context, req proto.Message) (proto.Message, error
 	if !ok {
 		return nil, errs.ErrInvalidRequest.WrapMsg("invalid request type")
 	}
-
-	return &pb.RspHealth{
+	return proto.Marshal(&pb.RspHealth{
 		Msg: "ok",
-	}, nil
+	})
 }

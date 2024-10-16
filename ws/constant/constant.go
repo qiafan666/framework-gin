@@ -36,13 +36,8 @@ const (
 
 // UserContext 相关常量
 const (
-	RequestID       = "requestID"
-	OpUserID        = "opUserID"
-	ConnID          = "connID"
-	OpUserPlatform  = "platform"
-	Token           = "token"
-	RpcCustomHeader = "customHeader" // rpc中间件自定义ctx参数
-	CheckKey        = "CheckKey"
-	TriggerID       = "triggerID"
-	RemoteAddr      = "remoteAddr"
+	OpUserID       = "opUserID"
+	ConnID         = "connID"
+	OpUserPlatform = "platform"
+	RemoteAddr     = "remoteAddr"
 )

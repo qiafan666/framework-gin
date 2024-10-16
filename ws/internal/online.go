@@ -4,17 +4,12 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/binary"
-	"fmt"
 	"framework-gin/common/function"
 	"framework-gin/ws/constant"
-	"framework-gin/ws/mcontext"
 	"framework-gin/ws/proto/pb"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/glog"
 	"math/rand"
-	"os"
-	"strconv"
-	"sync/atomic"
 	"time"
 )
 
@@ -92,16 +87,18 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 		}
 	}
 
-	var count atomic.Int64 // 用于生成唯一的请求ID
-	requestIDPrefix := fmt.Sprintf("p_%d_", os.Getpid())
-
 	// 执行 SetUserOnlineStatus 请求
 	doRequest := func(req *pb.SetUserOnlineStatusReq) {
 		// 为每个请求设置唯一的 requestID 并创建一个带超时的上下文
-		opIdCtx := mcontext.SetRequestID(function.WsCtx, requestIDPrefix+strconv.FormatInt(count.Add(1), 10))
-		ctx, cancel := context.WithTimeout(opIdCtx, time.Second*5)
+		ctx, cancel := context.WithTimeout(function.WsCtx, time.Second*5)
 		defer cancel()
 
+		for _, status := range req.Status {
+			err := ws.rdbOnline.SetUserOnline(ctx, status.UserID, status.Online, status.Offline)
+			if err != nil {
+				glog.Slog.ErrorKVs(ctx, "set user online status error", "err", err, "userID", status.UserID, "online", status.Online, "offline", status.Offline)
+			}
+		}
 		// TODO 更新用户在线状态
 		glog.Slog.DebugKVs(ctx, "update user online status", "req", req)
 	}

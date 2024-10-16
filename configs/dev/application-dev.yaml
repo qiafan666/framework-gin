@@ -15,3 +15,5 @@ dataSource:
 jwt:
   secret: 12345678
   expire: 30 #day
+ws:
+  multiLoginPolicy: 1

@@ -3,7 +3,21 @@ package pb;
 
 option go_package = "./pb;pb";
 
-// grp:1 cmd:1 业务流程检查
+// grp:1 cmd:1 订阅用户在线状态
+message ReqSubUserOnlineStatus {
+  repeated string subscribeUserID = 1;
+  repeated string unsubscribeUserID = 2;
+}
+message RspSubUserOnlineStatus {
+  repeated SubUserOnlineStatusElem subscribers = 1;
+}
+message SubUserOnlineStatusElem {
+  string userID = 1;
+  repeated int32 onlinePlatformIDs = 2;
+}
+
+
+// grp:2 cmd:1 业务流程检查
 message ReqHealth {
   string msg = 1;
 }

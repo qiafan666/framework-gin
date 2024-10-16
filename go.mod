@@ -7,6 +7,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang/protobuf v1.5.0
 	github.com/gorilla/websocket v1.5.3
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/qiafan666/gotato v1.1.23
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/swaggo/swag v1.16.3

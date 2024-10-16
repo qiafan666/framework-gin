@@ -8,12 +8,9 @@ import (
 
 // Register Start run ws server.
 func Register(r *gin.Engine) {
-
 	// 注册路由
-	routes.RegisterSysRoutes()
-
+	routes.RegisterLogicRoutes()
 	longServer := internal.NewWsServer()
-
 	go longServer.ChangeOnlineStatus(4)
 	longServer.Run(r)
 }

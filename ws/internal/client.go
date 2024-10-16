@@ -3,8 +3,7 @@ package internal
 import (
 	"context"
 	"framework-gin/ws/constant"
-	"framework-gin/ws/mcontext"
-	"github.com/golang/protobuf/proto"
+	"framework-gin/ws/proto/pb"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/ggin"
@@ -42,9 +41,9 @@ type PingPongHandler func(string) error
 type Client struct {
 	w              *sync.Mutex
 	conn           LongConn
-	PlatformID     int    `json:"platformID"`
-	IsCompress     bool   `json:"isCompress"`
-	UserID         string `json:"userID"`
+	PlatformID     int    `json:"platform_id"`
+	IsCompress     bool   `json:"is_compress"`
+	UserID         string `json:"user_id"`
 	userCtx        *UserConnContext
 	longConnServer LongConnServer
 	closed         atomic.Bool
@@ -174,15 +173,25 @@ func (c *Client) handleMessage(message []byte) error {
 		return gerr.New("exception conn userID not same to req userID", "binaryReq", binaryReq.String())
 	}
 
-	ctx := mcontext.WithMustInfoCtx(
-		[]string{binaryReq.RequestID, binaryReq.SendID, constant.PlatformIDToName(c.PlatformID), c.userCtx.GetConnID()},
+	ctx := WithMustInfoCtx(
+		[]any{binaryReq.RequestID, binaryReq.SendID, constant.PlatformIDToName(c.PlatformID), c.userCtx.GetConnID(), c.userCtx.RemoteAddr},
 	)
 
 	glog.Slog.DebugKVs(ctx, "gateway req message", "req", binaryReq.String())
 
-	data, err := c.logicHandler.DoMsgHandler(ctx, binaryReq)
-	if err != nil {
-		return err
+	var data []byte
+	if binaryReq.GrpID == uint8(pb.GRP_SYS) {
+		switch binaryReq.CmdID {
+		case uint8(pb.SYS_CMD_SUBUSERONLINESTATUS):
+			data, err = c.longConnServer.SubUserOnlineStatus(ctx, c, binaryReq)
+		default:
+			return gerr.New("not support groupID and cmdID", "groupID", binaryReq.GrpID, "cmdID", binaryReq.CmdID)
+		}
+	} else {
+		data, err = c.logicHandler.DoMsgHandler(ctx, binaryReq)
+		if err != nil {
+			return err
+		}
 	}
 
 	return c.replyMessage(ctx, binaryReq, err, data)
@@ -200,7 +209,7 @@ func (c *Client) close() {
 	c.longConnServer.UnRegister(c)
 }
 
-func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, err error, data proto.Message) error {
+func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, err error, data []byte) error {
 	errResp := ggin.ParseError(err)
 	mReply := Resp{
 		GrpID:     binaryReq.GrpID,
@@ -218,12 +227,11 @@ func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, err error, da
 	return nil
 }
 
-func (c *Client) PushMessage(ctx context.Context, data proto.Message) error {
+func (c *Client) PushMessage(ctx context.Context, data []byte) error {
 	resp := Resp{
 		//ReqIdentifier: WSPushMsg,
 		//TODO 推送消息格式
-		RequestID: mcontext.GetRequestID(ctx),
-		Data:      data,
+		Data: data,
 	}
 	return c.writeBinaryMsg(resp)
 }
@@ -231,7 +239,8 @@ func (c *Client) PushMessage(ctx context.Context, data proto.Message) error {
 func (c *Client) KickOnlineMessage() error {
 	//TODO 踢人消息格式
 	resp := Resp{
-		//ReqIdentifier: WSKickOnlineMsg,
+		GrpID: uint8(pb.GRP_SYS),
+		CmdID: uint8(pb.SYS_CMD_KICKONLINEUSER),
 	}
 	glog.Slog.DebugKVs(c.userCtx.Ctx, "KickOnlineMessage", "resp", resp.String())
 	err := c.writeBinaryMsg(resp)
@@ -239,7 +248,7 @@ func (c *Client) KickOnlineMessage() error {
 	return err
 }
 
-func (c *Client) PushUserOnlineStatus(data proto.Message) error {
+func (c *Client) PushUserOnlineStatus(data []byte) error {
 	//TODO 推送用户在线格式
 	resp := Resp{
 		//ReqIdentifier: WsSubUserOnlineStatus,

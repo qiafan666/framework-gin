@@ -15,7 +15,6 @@ type OnlineCache interface {
 	SetUserOnline(ctx context.Context, userID string, online, offline []int32) error
 }
 
-// TODO 多服务通知在线状态，先搞单机版
 func NewUserOnline(rdb redis.UniversalClient) OnlineCache {
 	return &userOnline{
 		rdb:         rdb,

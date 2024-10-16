@@ -2,16 +2,19 @@ package internal
 
 import (
 	"context"
+	"framework-gin/common/function"
 	"framework-gin/middleware"
-	"framework-gin/ws/cache"
 	"framework-gin/ws/constant"
 	"framework-gin/ws/errs"
-	"framework-gin/ws/mcontext"
+	"framework-gin/ws/localcache"
 	"framework-gin/ws/proto/pb"
+	"framework-gin/ws/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gcompress"
+	"github.com/qiafan666/gotato/commons/ggin"
 	"github.com/qiafan666/gotato/commons/glog"
+	"github.com/qiafan666/gotato/commons/gredis"
 	v2 "github.com/qiafan666/gotato/v2"
 	"sync"
 	"sync/atomic"
@@ -37,9 +40,9 @@ type LongConnServer interface {
 	KickUserConn(client *Client) error
 	UnRegister(c *Client)
 	SetKickHandlerInfo(i *kickHandler)
+	SubUserOnlineStatus(ctx context.Context, client *Client, data *Req) ([]byte, error)
 	gcompress.Compressor
 	gcommon.Encoder
-	//MessageHandler
 }
 
 type WsServer struct {
@@ -49,7 +52,8 @@ type WsServer struct {
 	unregisterChan    chan *Client
 	kickHandlerChan   chan *kickHandler
 	clients           UserMap
-	online            *rpccache.OnlineCache
+	localOnlineCache  *localcache.OnlineCache
+	rdbOnline         redis.OnlineCache
 	subscription      *Subscription
 	clientPool        sync.Pool
 	onlineUserNum     atomic.Int64
@@ -84,7 +88,12 @@ func (ws *WsServer) GetUserPlatformCons(userID string, platform int) ([]*Client,
 
 func NewWsServer() *WsServer {
 
-	return &WsServer{
+	rdb, err := gredis.NewRedisClient(function.WsCtx, &gredis.Config{})
+	if err != nil {
+		glog.Slog.ErrorKVs(function.WsCtx, "redis connect error", "err", err.Error())
+		panic(err)
+	}
+	wsServer := &WsServer{
 		wsMaxConnNum:     100000,
 		writeBufferSize:  4096,
 		handshakeTimeout: 10 * time.Second,
@@ -101,6 +110,9 @@ func NewWsServer() *WsServer {
 		Compressor:      gcompress.NewGzipCompressor(),
 		Encoder:         gcommon.NewGobEncoder(),
 	}
+	wsServer.localOnlineCache = localcache.NewOnlineCache(rdb, wsServer.SubscriberUserOnlineStatusChanges)
+	wsServer.rdbOnline = redis.NewUserOnline(rdb)
+	return wsServer
 }
 
 func (ws *WsServer) Run(r *gin.Engine) {
@@ -202,9 +214,9 @@ func (ws *WsServer) multiTerminalLoginChecker(clientOK bool, oldClients []*Clien
 				glog.Slog.WarnKVs(c.userCtx.Ctx, "KickOnlineMessage", "err", err)
 			}
 		}
-		ctx := mcontext.WithMustInfoCtx(
-			[]string{newClient.userCtx.GetRequestID(), newClient.userCtx.GetUserID(),
-				constant.PlatformIDToName(newClient.PlatformID), newClient.userCtx.GetConnID()},
+		ctx := WithMustInfoCtx(
+			[]any{constant.PlatformIDToName(newClient.PlatformID), newClient.userCtx.GetUserID(),
+				newClient.userCtx.GetConnID()},
 		)
 		//TODO 设置Token过期
 		if _, err := ws.InvalidateToken(ctx, newClient.token, newClient.UserID, newClient.PlatformID); err != nil {
@@ -234,7 +246,7 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 	// 检查当前在线用户连接数是否超过最大限制
 	if ws.onlineUserConnNum.Load() >= ws.wsMaxConnNum {
 		// 如果超过最大连接数限制，通过HTTP返回错误并停止处理
-		httpError(connContext, errs.ErrConnOverMaxNumLimit.WrapMsg("超过最大连接数限制"))
+		ggin.HttpError(connContext.RespWriter, errs.ErrConnOverMaxNumLimit.WrapMsg("超过最大连接数限制"))
 		return
 	}
 
@@ -242,7 +254,7 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 	err := connContext.ParseEssentialArgs()
 	if err != nil {
 		// 如果解析过程中出错，通过HTTP返回错误并停止处理
-		httpError(connContext, err)
+		ggin.HttpError(connContext.RespWriter, err)
 		return
 	}
 
@@ -260,7 +272,7 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 			}
 		}
 		// 如果不需要或无法通过WebSocket发送，返回HTTP错误并停止处理
-		httpError(connContext, err)
+		ggin.HttpError(connContext.RespWriter, err)
 		return
 	}
 

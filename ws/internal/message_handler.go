@@ -11,10 +11,10 @@ import (
 )
 
 type Req struct {
-	SendID    string `json:"sendID"        validate:"required"`
-	RequestID string `json:"requestID"   validate:"required"`
-	GrpID     uint8  `json:"grpID" validate:"required"` // 消息组id
-	CmdID     uint8  `json:"cmdID" validate:"required"` // 消息的ID
+	SendID    string `json:"send_id"        validate:"required"`
+	RequestID string `json:"request_id"   validate:"required"`
+	GrpID     uint8  `json:"grp_id" validate:"required"` // 消息组id
+	CmdID     uint8  `json:"cmd_id" validate:"required"` // 消息的ID
 	Data      []byte `json:"data"`
 }
 
@@ -49,12 +49,12 @@ func freeReq(req *Req) {
 }
 
 type Resp struct {
-	GrpID     uint8         `json:"grp_id"`
-	CmdID     uint8         `json:"cmd_id"`
-	RequestID string        `json:"request_id"`
-	Code      int           `json:"code"`
-	Msg       string        `json:"msg"`
-	Data      proto.Message `json:"data"`
+	GrpID     uint8  `json:"grp_id"`
+	CmdID     uint8  `json:"cmd_id"`
+	RequestID string `json:"request_id"`
+	Code      int    `json:"code"`
+	Msg       string `json:"msg"`
+	Data      []byte `json:"data"`
 }
 
 func (r *Resp) String() string {
@@ -70,12 +70,8 @@ func (r *Resp) String() string {
 
 var handler *MsgHandle
 
-type IRouter interface {
-	Do(req *Request)
-}
-
 // HandlerFunc 消息处理函数
-type HandlerFunc func(ctx context.Context, req proto.Message) (proto.Message, error)
+type HandlerFunc func(ctx context.Context, req proto.Message) ([]byte, error)
 
 type Handler struct {
 	f   HandlerFunc   // 业务处理函数
@@ -104,7 +100,7 @@ func GetMsgHandler() *MsgHandle {
 }
 
 // DoMsgHandler 处理业务
-func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) (proto.Message, error) {
+func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) ([]byte, error) {
 	msgID := genMsgID(req.GrpID, req.CmdID)
 	h, ok := m.Apis[msgID]
 	if !ok {
