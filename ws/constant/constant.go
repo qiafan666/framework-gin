@@ -36,7 +36,6 @@ const (
 
 // UserContext 相关常量
 const (
-	OpUserID       = "opUserID"
 	ConnID         = "connID"
 	OpUserPlatform = "platform"
 	RemoteAddr     = "remoteAddr"

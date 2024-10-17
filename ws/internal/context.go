@@ -4,13 +4,12 @@ import (
 	"context"
 	"framework-gin/common"
 	"framework-gin/ws/constant"
-	"framework-gin/ws/errs"
+	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"
-	"github.com/qiafan666/gotato/commons/gencrypt"
 	"github.com/qiafan666/gotato/commons/gerr"
+	"github.com/qiafan666/gotato/commons/gid"
 	"github.com/qiafan666/gotato/commons/glog"
-	"github.com/qiafan666/gotato/commons/gtime"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -24,6 +23,7 @@ type UserConnContext struct {
 	Method     string
 	RemoteAddr string
 	ConnID     string
+	Language   string
 	Ctx        context.Context
 }
 
@@ -41,8 +41,6 @@ func (c *UserConnContext) Err() error {
 
 func (c *UserConnContext) Value(key any) any {
 	switch key {
-	case constant.OpUserID:
-		return c.GetUserID()
 	case constant.ConnID:
 		return c.GetConnID()
 	case constant.OpUserPlatform:
@@ -56,16 +54,20 @@ func (c *UserConnContext) Value(key any) any {
 
 func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnContext {
 
-	ctx := glog.SetTraceId(constant.PlatformIDToName(gcast.ToInt(req.Header.Get(common.HeaderPlatformID))) + "-" + req.Header.Get(common.HeaderSendID))
-	return &UserConnContext{
+	connID := gcast.ToString(gid.RandID64())
+	ctx := glog.SetTraceId(constant.PlatformIDToName(gcast.ToInt(req.Header.Get(common.HeaderPlatformID))) + "-" + connID)
+	x := &UserConnContext{
 		RespWriter: respWriter,
 		Req:        req,
 		Path:       req.URL.Path,
 		Method:     req.Method,
 		RemoteAddr: req.RemoteAddr,
-		ConnID:     gencrypt.Md5(req.RemoteAddr + "_" + strconv.Itoa(int(gtime.GetCurrentTimestampByMill()))),
-		Ctx:        ctx,
+
+		ConnID: connID,
+		Ctx:    ctx,
 	}
+	x.Language = x.GetLanguage()
+	return x
 }
 
 func newTempContext() *UserConnContext {
@@ -106,12 +108,17 @@ func (c *UserConnContext) GetConnID() string {
 	return c.ConnID
 }
 
-func (c *UserConnContext) GetUserID() string {
-	return c.Req.Header.Get(common.HeaderSendID)
+func (c *UserConnContext) GetLanguage() string {
+	if c.Req.Header.Get(common.HeaderLanguage) == "" ||
+		c.Req.Header.Get(common.HeaderLanguage) != commons.MsgLanguageChinese ||
+		c.Req.Header.Get(common.HeaderLanguage) != commons.MsgLanguageEnglish {
+		return commons.DefaultLanguage
+	}
+	return c.Req.Header.Get(common.HeaderLanguage)
 }
 
-func (c *UserConnContext) GetPlatformID() string {
-	return c.Req.Header.Get(common.HeaderPlatformID)
+func (c *UserConnContext) GetPlatformID() int {
+	return gcast.ToInt(c.Req.Header.Get(common.HeaderPlatformID))
 }
 
 func (c *UserConnContext) GetToken() string {
@@ -146,20 +153,15 @@ func (c *UserConnContext) SetToken(token string) {
 func (c *UserConnContext) ParseEssentialArgs() error {
 	_, exists := c.GetHeader(common.HeaderAuthorization)
 	if !exists {
-		return errs.ErrConnArgsErr.WrapMsg("token is empty")
-	}
-	_, exists = c.GetHeader(common.HeaderSendID)
-	if !exists {
-		return errs.ErrConnArgsErr.WrapMsg("sendID is empty")
+		return gerr.NewLangCodeError(common.ConnArgsErr, c.Language).WithDetail("auth token is empty")
 	}
 	platformIDStr, exists := c.GetHeader(common.HeaderPlatformID)
 	if !exists {
-		return errs.ErrConnArgsErr.WrapMsg("platformID is empty")
+		return gerr.NewLangCodeError(common.ConnArgsErr, c.Language).WithDetail("platformID is empty")
 	}
 	_, err := strconv.Atoi(platformIDStr)
 	if err != nil {
-		return errs.ErrConnArgsErr.WrapMsg("platformID is not int")
-
+		return gerr.NewLangCodeError(common.ConnArgsErr, c.Language).WithDetail("platformID is not a number")
 	}
 	return nil
 }
@@ -167,55 +169,61 @@ func (c *UserConnContext) ParseEssentialArgs() error {
 // ------------------------ ws logic context ------------------------
 
 func GetOpUserPlatform(ctx context.Context) string {
-	platform, _, _, _ := GetCtxInfos(ctx)
+	GetCtxInfos(ctx)
+	platform, _, _, _, _ := GetCtxInfos(ctx)
 	return platform
 }
-
-func GetOpUserID(ctx context.Context) string {
-	_, opUserID, _, _ := GetCtxInfos(ctx)
-	return opUserID
-}
-
 func GetConnID(ctx context.Context) string {
-	_, _, connID, _ := GetCtxInfos(ctx)
+	_, connID, _, _, _ := GetCtxInfos(ctx)
 	return connID
 }
-
+func GetUserID(ctx context.Context) string {
+	_, _, userID, _, _ := GetCtxInfos(ctx)
+	return userID
+}
+func GetRequestID(ctx context.Context) string {
+	_, _, _, requestID, _ := GetCtxInfos(ctx)
+	return requestID
+}
 func GetRemoteAddr(ctx context.Context) string {
-	_, _, _, addr := GetCtxInfos(ctx)
+	_, _, _, _, addr := GetCtxInfos(ctx)
 	return addr
 }
 
-func GetMustCtxInfo(ctx context.Context) (platform, opUserID, connID, remoteAddr string, err error) {
-	GetCtxInfos(ctx)
+func GetCtxInfosE(ctx context.Context) (platform, connID, userID, requestID, remoteAddr string, err error) {
+	platform, connID, userID, requestID, remoteAddr = GetCtxInfos(ctx)
 	if platform == "" {
 		err = gerr.New("platform is empty")
-		return
-	}
-	if opUserID == "" {
-		err = gerr.New("opUserID is empty")
 		return
 	}
 	if connID == "" {
 		err = gerr.New("connID is empty")
 		return
 	}
+	if userID == "" {
+		err = gerr.New("userID is empty")
+	}
+
+	if requestID == "" {
+		err = gerr.New("requestID is empty")
+	}
+
 	if remoteAddr == "" {
 		err = gerr.New("remoteAddr is empty")
 	}
-	return platform, opUserID, connID, remoteAddr, nil
+	return platform, connID, userID, requestID, remoteAddr, nil
 }
 
-func GetCtxInfos(ctx context.Context) (platform, opUserID, connID, remoteAddr string) {
+func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remoteAddr string) {
 	if traceId, ok := ctx.Value("trace_id").(string); ok {
 		slice := gcommon.String2Slice(traceId, "-")
-		return slice[0], slice[1], slice[2], slice[3]
+		return slice[0], slice[1], slice[2], slice[3], slice[4]
 	} else {
-		return "", "", "", ""
+		return "", "", "", "", ""
 	}
 }
 
-// WithMustInfoCtx platform-sendId-connId
+// WithMustInfoCtx platform-connID-userID-requestID-remoteAddr
 func WithMustInfoCtx(values []any) context.Context {
 	return glog.SetTraceId(gcommon.Slice2String(values, "-"))
 }

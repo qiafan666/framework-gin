@@ -3,19 +3,20 @@ package pb;
 
 option go_package = "./pb;pb";
 
-enum GRP {
-  DEF_GRP = 0;
-  SYS = 1;
-  LOGIC = 2;
+enum Grp {
+  Def = 0;
+  Sys = 1;
+  Logic = 2;
 }
 
-enum SYS_CMD {
-  DEF_CMD = 0;
-  SUBUSERONLINESTATUS = 1;
-  KICKONLINEUSER = 2;
+enum Cmd_sys {
+  Def_Cmd_Sys = 0;
+  Subscribe_Online_User = 1;
+  Kick_Online_User = 2;
+  Push_Message = 3;
 }
 
-enum LOGIC_CMD {
-  DEF_LOGIC_CMD = 0;
-  HEALTH = 1;
+enum Cmd_Logic {
+  Def_Cmd_Logic = 0;
+  Health = 1;
 }

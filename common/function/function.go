@@ -13,7 +13,7 @@ import (
 )
 
 // BindAndValid binds and validates data
-func BindAndValid(entity interface{}, ctx *gin.Context) (commons.ResponseCode, error) {
+func BindAndValid(entity interface{}, ctx *gin.Context) (int, error) {
 
 	//set base request parameter
 	object := reflect.ValueOf(entity)
@@ -60,4 +60,4 @@ func GetCtx(ctx *gin.Context) context.Context {
 	}
 }
 
-var WsCtx = context.WithValue(context.Background(), "trace_id", "ws_ctx")
+var WsCtx = context.WithValue(context.Background(), "trace_id", "ws_server")

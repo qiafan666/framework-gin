@@ -33,7 +33,7 @@ func NewOnlineCache(rdb redis.UniversalClient, fn func(ctx context.Context, user
 			userID, platformIDs, err := ParseUserOnlineStatus(message.Payload)
 			if err != nil {
 				// 如果解析失败，记录错误并继续下一条消息。
-				glog.Slog.ErrorKVs(function.WsCtx, "OnlineCache setUserOnline redis subscribe parseUserOnlineStatus", err, "payload", message.Payload, "channel", message.Channel)
+				glog.Slog.ErrorKVs(function.WsCtx, "OnlineCache setUserOnline redis subscribe parseUserOnlineStatus", "err", err, "payload", message.Payload, "channel", message.Channel)
 				continue
 			}
 

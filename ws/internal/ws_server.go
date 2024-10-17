@@ -2,16 +2,19 @@ package internal
 
 import (
 	"context"
+	"framework-gin/common"
 	"framework-gin/common/function"
 	"framework-gin/middleware"
 	"framework-gin/ws/constant"
-	"framework-gin/ws/errs"
 	"framework-gin/ws/localcache"
 	"framework-gin/ws/proto/pb"
 	"framework-gin/ws/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/golang/protobuf/proto"
+	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gcompress"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/ggin"
 	"github.com/qiafan666/gotato/commons/glog"
 	"github.com/qiafan666/gotato/commons/gredis"
@@ -40,7 +43,8 @@ type LongConnServer interface {
 	KickUserConn(client *Client) error
 	UnRegister(c *Client)
 	SetKickHandlerInfo(i *kickHandler)
-	SubUserOnlineStatus(ctx context.Context, client *Client, data *Req) ([]byte, error)
+	SubUserOnlineStatus(ctx context.Context, client *Client, data *Req) (proto.Message, int)
+
 	gcompress.Compressor
 	gcommon.Encoder
 }
@@ -88,11 +92,18 @@ func (ws *WsServer) GetUserPlatformCons(userID string, platform int) ([]*Client,
 
 func NewWsServer() *WsServer {
 
-	rdb, err := gredis.NewRedisClient(function.WsCtx, &gredis.Config{})
+	rdb, err := gredis.NewRedisClient(function.WsCtx, &gredis.Config{
+		ClusterMode: false,
+		Address:     []string{"10.80.10.109:6379"},
+		Username:    "",
+		Password:    "",
+		DB:          10,
+	})
 	if err != nil {
 		glog.Slog.ErrorKVs(function.WsCtx, "redis connect error", "err", err.Error())
 		panic(err)
 	}
+
 	wsServer := &WsServer{
 		wsMaxConnNum:     100000,
 		writeBufferSize:  4096,
@@ -135,6 +146,7 @@ func (ws *WsServer) Run(r *gin.Engine) {
 	r.GET("/ws", ws.wsHandler)
 }
 
+// SetKickHandlerInfo 暴露出去的踢人检查，分布式环境下使用
 func (ws *WsServer) SetKickHandlerInfo(i *kickHandler) {
 	ws.kickHandlerChan <- i
 }
@@ -145,23 +157,23 @@ func (ws *WsServer) registerClient(client *Client) {
 		clientOK   bool
 		oldClients []*Client
 	)
-	oldClients, userOK, clientOK = ws.clients.Get(client.UserID, client.PlatformID)
+	oldClients, userOK, clientOK = ws.clients.Get(client.parseToken.UserID, client.PlatformID)
 	if !userOK {
-		ws.clients.Set(client.UserID, client)
-		glog.Slog.DebugKVs(nil, "user not exist", "userID", client.UserID, "platformID", client.PlatformID)
+		ws.clients.Set(client.parseToken.UserID, client)
+		glog.Slog.DebugKVs(client.userCtx.Ctx, "registerClient,user not exist", "userID", client.parseToken.UserID, "platformID", client.PlatformID)
 		ws.onlineUserNum.Add(1)
 		ws.onlineUserConnNum.Add(1)
 	} else {
 		ws.multiTerminalLoginChecker(clientOK, oldClients, client)
-		glog.Slog.DebugKVs(client.userCtx.Ctx, "user exist", "userID", client.UserID, "platformID", client.PlatformID)
+		glog.Slog.DebugKVs(client.userCtx.Ctx, "registerClient,user exist", "userID", client.parseToken.UserID, "platformID", client.PlatformID)
 		if clientOK {
-			ws.clients.Set(client.UserID, client)
+			ws.clients.Set(client.parseToken.UserID, client)
 			// 当前平台连接已经存在，增加连接数
-			glog.Slog.InfoKVs(client.userCtx.Ctx, "repeat login", "userID", client.UserID, "platformID",
+			glog.Slog.InfoKVs(client.userCtx.Ctx, "registerClient,repeat login", "userID", client.parseToken.UserID, "platformID",
 				client.PlatformID, "old remote addr", getRemoteAdders(oldClients))
 			ws.onlineUserConnNum.Add(1)
 		} else {
-			ws.clients.Set(client.UserID, client)
+			ws.clients.Set(client.parseToken.UserID, client)
 			ws.onlineUserConnNum.Add(1)
 		}
 	}
@@ -170,7 +182,7 @@ func (ws *WsServer) registerClient(client *Client) {
 
 	glog.Slog.InfoKVs(
 		client.userCtx.Ctx,
-		"user online",
+		"registerClient,user online",
 		"online user Num",
 		ws.onlineUserNum.Load(),
 		"online user conn Num",
@@ -190,8 +202,9 @@ func getRemoteAdders(client []*Client) string {
 	return ret
 }
 
+// KickUserConn 踢人 分布式环境下使用
 func (ws *WsServer) KickUserConn(client *Client) error {
-	ws.clients.DeleteClients(client.UserID, []*Client{client})
+	ws.clients.DeleteClients(client.parseToken.UserID, []*Client{client})
 	return client.KickOnlineMessage()
 }
 
@@ -207,62 +220,53 @@ func (ws *WsServer) multiTerminalLoginChecker(clientOK bool, oldClients []*Clien
 		if !clientOK {
 			return
 		}
-		ws.clients.DeleteClients(newClient.UserID, oldClients)
+		ws.clients.DeleteClients(newClient.parseToken.UserID, oldClients)
 		for _, c := range oldClients {
 			err := c.KickOnlineMessage()
 			if err != nil {
-				glog.Slog.WarnKVs(c.userCtx.Ctx, "KickOnlineMessage", "err", err)
+				glog.Slog.WarnKVs(c.userCtx.Ctx, "multiTerminalLoginChecker,KickOnlineMessage", "err", err)
 			}
-		}
-		ctx := WithMustInfoCtx(
-			[]any{constant.PlatformIDToName(newClient.PlatformID), newClient.userCtx.GetUserID(),
-				newClient.userCtx.GetConnID()},
-		)
-		//TODO 设置Token过期
-		if _, err := ws.InvalidateToken(ctx, newClient.token, newClient.UserID, newClient.PlatformID); err != nil {
-			glog.Slog.WarnKVs(ctx, "InvalidateToken err", "err", err, "userID", newClient.UserID, "platformID", newClient.PlatformID)
 		}
 	}
 }
 
 func (ws *WsServer) unregisterClient(client *Client) {
 	defer ws.clientPool.Put(client)
-	isDeleteUser := ws.clients.DeleteClients(client.UserID, []*Client{client})
+	isDeleteUser := ws.clients.DeleteClients(client.parseToken.UserID, []*Client{client})
 	if isDeleteUser {
 		ws.onlineUserNum.Add(-1)
 	}
 	ws.onlineUserConnNum.Add(-1)
 	ws.subscription.DelClient(client)
-	//ws.SetUserOnlineStatus(client.ctx, client, constant.Offline)
-	glog.Slog.InfoKVs(client.userCtx.Ctx, "user offline", "close reason", client.closedErr, "online user Num",
+	glog.Slog.InfoKVs(client.userCtx.Ctx, "unregisterClient user offline", "close reason", client.closedErr, "online user Num",
 		ws.onlineUserNum.Load(), "online user conn Num", ws.onlineUserConnNum.Load())
 }
 
 func (ws *WsServer) wsHandler(c *gin.Context) {
 
 	// 创建一个新的连接上下文
-	connContext := newContext(c.Writer, c.Request)
+	connCtx := newContext(c.Writer, c.Request)
 
 	// 检查当前在线用户连接数是否超过最大限制
 	if ws.onlineUserConnNum.Load() >= ws.wsMaxConnNum {
 		// 如果超过最大连接数限制，通过HTTP返回错误并停止处理
-		ggin.HttpError(connContext.RespWriter, errs.ErrConnOverMaxNumLimit.WrapMsg("超过最大连接数限制"))
+		ggin.HttpError(connCtx.RespWriter, gerr.NewLangCodeError(common.ConnOverMaxNumLimit, connCtx.Language))
 		return
 	}
 
 	// 解析必要的参数（例如用户ID、Token）
-	err := connContext.ParseEssentialArgs()
+	err := connCtx.ParseEssentialArgs()
 	if err != nil {
 		// 如果解析过程中出错，通过HTTP返回错误并停止处理
-		ggin.HttpError(connContext.RespWriter, err)
+		ggin.HttpError(connCtx.RespWriter, err)
 		return
 	}
 
 	// 调用认证客户端，解析从上下文中获取的Token
-	_, err = ws.ParseToken(connContext, connContext.GetToken())
+	parseToken, err := ws.ParseToken(connCtx, connCtx.GetToken())
 	if err != nil {
 		// 如果Token解析失败，根据上下文标志决定是否通过WebSocket发送错误信息
-		shouldSendError := connContext.ShouldSendResp()
+		shouldSendError := connCtx.ShouldSendResp()
 		if shouldSendError {
 			// 创建一个WebSocket连接对象并尝试通过WebSocket发送错误信息
 			wsLongConn := newGWebSocket(ws.handshakeTimeout, ws.writeBufferSize)
@@ -272,7 +276,7 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 			}
 		}
 		// 如果不需要或无法通过WebSocket发送，返回HTTP错误并停止处理
-		ggin.HttpError(connContext.RespWriter, err)
+		ggin.HttpError(connCtx.RespWriter, err)
 		return
 	}
 
@@ -280,11 +284,11 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 	wsLongConn := newGWebSocket(ws.handshakeTimeout, ws.writeBufferSize)
 	if err = wsLongConn.GenerateLongConn(c.Writer, c.Request); err != nil {
 		// 如果长连接创建失败，握手过程中已处理错误
-		glog.Slog.WarnF(connContext.Ctx, "长连接创建失败: %v", err)
+		glog.Slog.WarnF(connCtx.Ctx, "长连接创建失败: %v", err)
 		return
 	} else {
 		// 检查是否需要通过WebSocket发送正常响应
-		shouldSendSuccessResp := connContext.ShouldSendResp()
+		shouldSendSuccessResp := connCtx.ShouldSendResp()
 		if shouldSendSuccessResp {
 			// 尝试通过WebSocket发送成功信息
 			if err = wsLongConn.RespondWithSuccess(); err != nil {
@@ -296,26 +300,23 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 
 	// 从客户端池中获取一个客户端对象，重置其状态，并将其与当前的WebSocket长连接关联
 	client := ws.clientPool.Get().(*Client)
-	client.ResetClient(connContext, wsLongConn, ws)
+	client.ResetClient(connCtx, wsLongConn, ws)
+	client.parseToken = parseToken
 
 	// 将客户端注册到服务器并开始消息处理
 	ws.registerChan <- client
 	go client.readMessage()
 }
 
-func (ws *WsServer) ParseToken(connContext *UserConnContext, token string) (pb.ParseToken, error) {
+func (ws *WsServer) ParseToken(connContext *UserConnContext, token string) (*pb.ParseToken, error) {
 	if token == "test" {
-		return pb.ParseToken{UserID: "test", PlatformID: 1}, nil
+		return &pb.ParseToken{UserID: "ning"}, nil
 	}
-	_, err := middleware.ParseToken(token)
+	resultMap, err := middleware.ParseToken(connContext.Req.Header.Get(common.HeaderAuthorization))
 	if err != nil {
-		return pb.ParseToken{}, err
+		return &pb.ParseToken{}, err
 	}
-	//TODO 验证token中的uuid是否正确
-	return pb.ParseToken{}, nil
-}
-
-func (ws *WsServer) InvalidateToken(ctx context.Context, token string, userId string, platformId int) (pb.InvalidateToken, error) {
-	//TODO 过期token处理
-	return pb.InvalidateToken{}, nil
+	return &pb.ParseToken{
+		UserID: gcast.ToString(resultMap["user_id"]),
+	}, nil
 }

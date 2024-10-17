@@ -4,6 +4,7 @@ import (
 	"context"
 	"framework-gin/ws/proto/pb"
 	"github.com/golang/protobuf/proto"
+	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/glog"
 	"sync"
@@ -34,24 +35,26 @@ func (ws *WsServer) pushUserIDOnlineStatus(ctx context.Context, userID string, p
 		Subscribers: []*pb.SubUserOnlineStatusElem{{UserID: userID, OnlinePlatformIDs: platformIDs}},
 	})
 	if err != nil {
-		glog.Slog.ErrorKVs(ctx, "pushUserIDOnlineStatus json.Marshal", "err", err.Error(), "userID", userID, "platformIDs", platformIDs)
+		glog.Slog.ErrorKVs(ctx, "pushUserIDOnlineStatus json.Marshal", "err", err, "userID", userID, "platformIDs", platformIDs)
 		return
 	}
 	// 将在线状态消息推送给所有订阅该用户的客户端。
 	for _, client := range clients {
 		if err = client.PushUserOnlineStatus(onlineStatus); err != nil {
-			glog.Slog.ErrorKVs(ctx, "UserSubscribeOnlineStatusNotification push failed", err, "userID", client.UserID, "platformID", client.PlatformID, "changeUserID", userID, "changePlatformID", platformIDs)
+			glog.Slog.ErrorKVs(ctx, "UserSubscribeOnlineStatusNotification push failed", "err", err,
+				"userID", client.parseToken.UserID, "platformID", client.PlatformID, "changeUserID", userID, "changePlatformID", platformIDs)
 		}
 	}
 }
 
 // SubUserOnlineStatus 处理客户端订阅或取消订阅用户在线状态的请求。
 // 它将请求的数据解析后更新订阅状态，并返回当前订阅的用户的在线状态。
-func (ws *WsServer) SubUserOnlineStatus(ctx context.Context, client *Client, data *Req) ([]byte, error) {
+func (ws *WsServer) SubUserOnlineStatus(ctx context.Context, client *Client, data *Req) (proto.Message, int) {
 	var sub pb.ReqSubUserOnlineStatus
 	// 解析请求数据，如果解析失败则返回错误。
 	if err := proto.Unmarshal(data.Data, &sub); err != nil {
-		return nil, err
+		glog.Slog.ErrorKVs(ctx, "SubUserOnlineStatus proto.Unmarshal", "err", err, "data", data.Data)
+		return nil, commons.UnKnowError
 	}
 	// 更新订阅的用户和取消订阅的用户。
 	ws.subscription.Sub(client, sub.SubscribeUserID, sub.UnsubscribeUserID)
@@ -63,7 +66,8 @@ func (ws *WsServer) SubUserOnlineStatus(ctx context.Context, client *Client, dat
 		for _, userID := range sub.SubscribeUserID {
 			platformIDs, err := ws.localOnlineCache.GetUserOnlinePlatform(ctx, userID)
 			if err != nil {
-				return nil, err
+				glog.Slog.ErrorKVs(ctx, "SubUserOnlineStatus GetUserOnlinePlatform failed", "err", err, "userID", userID)
+				return nil, commons.UnKnowError
 			}
 			// 添加用户的在线状态信息到响应中。
 			resp.Subscribers = append(resp.Subscribers, &pb.SubUserOnlineStatusElem{
@@ -73,7 +77,7 @@ func (ws *WsServer) SubUserOnlineStatus(ctx context.Context, client *Client, dat
 		}
 	}
 	// 将响应数据序列化后返回。
-	return proto.Marshal(resp)
+	return resp, commons.OK
 }
 
 // newSubscription 创建并返回一个新的订阅管理对象。

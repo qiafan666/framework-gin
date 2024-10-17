@@ -4,9 +4,10 @@ import (
 	"context"
 	"framework-gin/ws/constant"
 	"framework-gin/ws/proto/pb"
+	"github.com/golang/protobuf/proto"
+	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gerr"
-	"github.com/qiafan666/gotato/commons/ggin"
 	"github.com/qiafan666/gotato/commons/glog"
 	"sync"
 	"sync/atomic"
@@ -41,14 +42,13 @@ type PingPongHandler func(string) error
 type Client struct {
 	w              *sync.Mutex
 	conn           LongConn
-	PlatformID     int    `json:"platform_id"`
-	IsCompress     bool   `json:"is_compress"`
-	UserID         string `json:"user_id"`
+	PlatformID     int  `json:"platform_id"`
+	IsCompress     bool `json:"is_compress"`
+	parseToken     *pb.ParseToken
 	userCtx        *UserConnContext
 	longConnServer LongConnServer
 	closed         atomic.Bool
 	closedErr      error
-	token          string
 	hbCtx          context.Context
 	hbCancel       context.CancelFunc
 	subLock        *sync.Mutex
@@ -62,19 +62,18 @@ func (c *Client) ResetClient(ctx *UserConnContext, conn LongConn, longConnServer
 	c.conn = conn
 	c.PlatformID = gcast.ToInt(ctx.GetPlatformID())
 	c.IsCompress = ctx.GetCompression()
-	c.UserID = ctx.GetUserID()
+	c.parseToken = &pb.ParseToken{}
 	c.userCtx = ctx
 	c.longConnServer = longConnServer
 	c.closed.Store(false)
 	c.closedErr = nil
-	c.token = ctx.GetToken()
 	c.hbCtx, c.hbCancel = context.WithCancel(c.userCtx)
 	c.subLock = new(sync.Mutex)
 	if c.subUserIDs != nil {
 		clear(c.subUserIDs)
 	}
 	c.subUserIDs = make(map[string]struct{})
-	c.logicHandler = NewMsgHandle()
+	c.logicHandler = GetMsgHandler()
 }
 
 func (c *Client) pingHandler(appData string) error {
@@ -82,7 +81,7 @@ func (c *Client) pingHandler(appData string) error {
 		return err
 	}
 
-	glog.Slog.DebugKVs(c.userCtx.Ctx, "ping Handler Success.", "appData", appData)
+	glog.Slog.DebugKVs(c.userCtx.Ctx, "pingHandler", "appData", appData)
 	return c.writePongMsg(appData)
 }
 
@@ -98,7 +97,7 @@ func (c *Client) readMessage() {
 	defer func() {
 		if r := recover(); r != nil {
 			c.closedErr = ErrPanic
-			glog.Slog.PanicF(c.userCtx.Ctx, "readMessage panic: %s", r)
+			glog.Slog.PanicKVs(c.userCtx.Ctx, "readMessage", "err", r)
 		}
 		c.close()
 	}()
@@ -110,10 +109,9 @@ func (c *Client) readMessage() {
 	c.activeHeartbeat()
 
 	for {
-		glog.Slog.DebugKVs(c.userCtx.Ctx, "readMessage")
 		messageType, message, returnErr := c.conn.ReadMessage()
 		if returnErr != nil {
-			glog.Slog.WarnKVs(c.userCtx.Ctx, "readMessage", "readMessage", returnErr, "messageType", messageType)
+			glog.Slog.WarnKVs(c.userCtx.Ctx, "readMessage", "err", returnErr, "messageType", messageType)
 			c.closedErr = returnErr
 			return
 		}
@@ -138,7 +136,7 @@ func (c *Client) readMessage() {
 			return
 		case PingMessage:
 			err := c.writePongMsg("")
-			glog.Slog.ErrorKVs(c.userCtx.Ctx, "pingHandler", err)
+			glog.Slog.ErrorKVs(c.userCtx.Ctx, "readMessage", "writePongMsg err", err)
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
@@ -149,6 +147,7 @@ func (c *Client) readMessage() {
 
 // handleMessage 处理消息
 func (c *Client) handleMessage(message []byte) error {
+
 	if c.IsCompress {
 		var err error
 		message, err = c.longConnServer.DecompressWithPool(message)
@@ -162,39 +161,36 @@ func (c *Client) handleMessage(message []byte) error {
 
 	err := c.longConnServer.Decode(message, binaryReq)
 	if err != nil {
+		glog.Slog.ErrorKVs(c.userCtx.Ctx, "handleMessage", "decode error", err)
 		return err
 	}
-
 	if err = c.longConnServer.Validate(binaryReq); err != nil {
+		glog.Slog.ErrorKVs(c.userCtx.Ctx, "handleMessage", "validate error", err)
 		return err
 	}
 
-	if binaryReq.SendID != c.UserID {
-		return gerr.New("exception conn userID not same to req userID", "binaryReq", binaryReq.String())
-	}
-
-	ctx := WithMustInfoCtx(
-		[]any{binaryReq.RequestID, binaryReq.SendID, constant.PlatformIDToName(c.PlatformID), c.userCtx.GetConnID(), c.userCtx.RemoteAddr},
+	c.userCtx.Ctx = WithMustInfoCtx(
+		[]any{constant.PlatformIDToName(c.PlatformID), c.userCtx.GetConnID(), c.parseToken.UserID, binaryReq.RequestID, c.userCtx.RemoteAddr},
 	)
 
-	glog.Slog.DebugKVs(ctx, "gateway req message", "req", binaryReq.String())
+	glog.Slog.DebugKVs(c.userCtx.Ctx, "handleMessage", "req", binaryReq.String())
 
-	var data []byte
-	if binaryReq.GrpID == uint8(pb.GRP_SYS) {
+	var data proto.Message
+	var code int
+	if binaryReq.GrpID == uint8(pb.Grp_Sys) {
 		switch binaryReq.CmdID {
-		case uint8(pb.SYS_CMD_SUBUSERONLINESTATUS):
-			data, err = c.longConnServer.SubUserOnlineStatus(ctx, c, binaryReq)
+		case uint8(pb.CmdSys_Subscribe_Online_User):
+			data, code = c.longConnServer.SubUserOnlineStatus(c.userCtx.Ctx, c, binaryReq)
 		default:
 			return gerr.New("not support groupID and cmdID", "groupID", binaryReq.GrpID, "cmdID", binaryReq.CmdID)
 		}
 	} else {
-		data, err = c.logicHandler.DoMsgHandler(ctx, binaryReq)
-		if err != nil {
-			return err
-		}
+		data, code = c.logicHandler.DoMsgHandler(c.userCtx.Ctx, binaryReq)
+		glog.Slog.DebugKVs(c.userCtx.Ctx, "handleMessage DoMsgHandler", "err",
+			commons.GetCodeAndMsg(code, c.userCtx.Language))
 	}
 
-	return c.replyMessage(ctx, binaryReq, err, data)
+	return c.replyMessage(c.userCtx.Ctx, binaryReq, data, code)
 }
 
 func (c *Client) close() {
@@ -209,20 +205,31 @@ func (c *Client) close() {
 	c.longConnServer.UnRegister(c)
 }
 
-func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, err error, data []byte) error {
-	errResp := ggin.ParseError(err)
+func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Message, code int) error {
+	glog.Slog.DebugKVs(ctx, "replyMessage", "data", data, "code", code)
+
 	mReply := Resp{
 		GrpID:     binaryReq.GrpID,
 		CmdID:     binaryReq.CmdID,
 		RequestID: binaryReq.RequestID,
-		Code:      errResp.Code,
-		Msg:       errResp.Msg,
-		Data:      data,
 	}
-	glog.Slog.DebugKVs(ctx, "gateway reply message", "resp", mReply.String())
-	err = c.writeBinaryMsg(mReply)
+
+	if code == 0 {
+		marshal, err := proto.Marshal(data)
+		if err != nil {
+			glog.Slog.ErrorKVs(ctx, "replyMessage", "marshal data error", err)
+			mReply.Code = commons.UnKnowError
+		} else {
+			mReply.Data = marshal
+		}
+	} else {
+		mReply.Code = code
+		mReply.Msg = commons.GetCodeAndMsg(code, c.userCtx.Language)
+	}
+
+	err := c.writeBinaryMsg(mReply)
 	if err != nil {
-		glog.Slog.WarnKVs(ctx, "wireBinaryMsg replyMessage", err, "resp", mReply.String())
+		glog.Slog.WarnKVs(ctx, "replyMessage", "writeBinaryMsg error", err, "resp", mReply.String())
 	}
 	return nil
 }
@@ -236,11 +243,11 @@ func (c *Client) PushMessage(ctx context.Context, data []byte) error {
 	return c.writeBinaryMsg(resp)
 }
 
+// KickOnlineMessage 踢下线 分布式使用
 func (c *Client) KickOnlineMessage() error {
-	//TODO 踢人消息格式
 	resp := Resp{
-		GrpID: uint8(pb.GRP_SYS),
-		CmdID: uint8(pb.SYS_CMD_KICKONLINEUSER),
+		GrpID: uint8(pb.Grp_Sys),
+		CmdID: uint8(pb.CmdSys_Kick_Online_User),
 	}
 	glog.Slog.DebugKVs(c.userCtx.Ctx, "KickOnlineMessage", "resp", resp.String())
 	err := c.writeBinaryMsg(resp)
@@ -249,10 +256,10 @@ func (c *Client) KickOnlineMessage() error {
 }
 
 func (c *Client) PushUserOnlineStatus(data []byte) error {
-	//TODO 推送用户在线格式
 	resp := Resp{
-		//ReqIdentifier: WsSubUserOnlineStatus,
-		Data: data,
+		GrpID: uint8(pb.Grp_Sys),
+		CmdID: uint8(pb.CmdSys_Subscribe_Online_User),
+		Data:  data,
 	}
 	return c.writeBinaryMsg(resp)
 }
@@ -298,7 +305,7 @@ func (c *Client) activeHeartbeat() {
 				select {
 				case <-ticker.C:
 					if err := c.writePingMsg(); err != nil {
-						glog.Slog.WarnKVs(c.userCtx.Ctx, "send Ping Message error.", "err", err.Error())
+						glog.Slog.WarnKVs(c.userCtx.Ctx, "activeHeartbeat", "err", err)
 						return
 					}
 				case <-c.hbCtx.Done():
@@ -320,14 +327,14 @@ func (c *Client) writePingMsg() error {
 	if err != nil {
 		return err
 	}
-	glog.Slog.DebugKVs(c.userCtx.Ctx, "write Ping Msg in Server")
+	//glog.Slog.DebugKVs(c.userCtx.Ctx, "writePingMsg")
 	return c.conn.WriteMessage(PingMessage, nil)
 }
 
 func (c *Client) writePongMsg(appData string) error {
-	glog.Slog.DebugKVs(c.userCtx.Ctx, "write Pong Msg in Server", "appData", appData)
+	//glog.Slog.DebugKVs(c.userCtx.Ctx, "writePongMsg", "appData", appData)
 	if c.closed.Load() {
-		glog.Slog.WarnKVs(c.userCtx.Ctx, "is closed in server", nil, "appdata", appData, "closed err", c.closedErr)
+		glog.Slog.WarnKVs(c.userCtx.Ctx, "writePongMsg", "appdata", appData, "closed err", c.closedErr)
 		return nil
 	}
 
@@ -336,12 +343,12 @@ func (c *Client) writePongMsg(appData string) error {
 
 	err := c.conn.SetWriteDeadline(writeWait)
 	if err != nil {
-		glog.Slog.WarnKVs(c.userCtx.Ctx, "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", writeWait, "appData", appData)
+		glog.Slog.WarnKVs(c.userCtx.Ctx, "writePongMsg", "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", writeWait, "appData", appData)
 		return gerr.Wrap(err)
 	}
 	err = c.conn.WriteMessage(PongMessage, []byte(appData))
 	if err != nil {
-		glog.Slog.WarnKVs(c.userCtx.Ctx, "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
+		glog.Slog.WarnKVs(c.userCtx.Ctx, "writePongMsg", "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
 	}
 
 	return gerr.Wrap(err)

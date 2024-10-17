@@ -4,14 +4,13 @@ import (
 	"context"
 	"framework-gin/common/function"
 	"github.com/golang/protobuf/proto"
-	"github.com/qiafan666/gotato/commons/gerr"
-	"github.com/qiafan666/gotato/commons/ggin/jsonutil"
+	"github.com/qiafan666/gotato/commons"
+	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/glog"
 	"sync"
 )
 
 type Req struct {
-	SendID    string `json:"send_id"        validate:"required"`
 	RequestID string `json:"request_id"   validate:"required"`
 	GrpID     uint8  `json:"grp_id" validate:"required"` // 消息组id
 	CmdID     uint8  `json:"cmd_id" validate:"required"` // 消息的ID
@@ -20,12 +19,11 @@ type Req struct {
 
 func (r *Req) String() string {
 	var tReq Req
-	tReq.SendID = r.SendID
 	tReq.RequestID = r.RequestID
 	tReq.GrpID = r.GrpID
 	tReq.CmdID = r.CmdID
 	tReq.Data = r.Data
-	return jsonutil.StructToJsonString(tReq)
+	return gcast.ToString(tReq)
 }
 
 var reqPool = sync.Pool{
@@ -38,7 +36,6 @@ func getReq() *Req {
 	req := reqPool.Get().(*Req)
 	req.Data = nil
 	req.RequestID = ""
-	req.SendID = ""
 	req.GrpID = 0
 	req.CmdID = 0
 	return req
@@ -65,13 +62,13 @@ func (r *Resp) String() string {
 	tResp.GrpID = r.GrpID
 	tResp.CmdID = r.CmdID
 	tResp.Data = r.Data
-	return jsonutil.StructToJsonString(tResp)
+	return gcast.ToString(tResp)
 }
 
 var handler *MsgHandle
 
 // HandlerFunc 消息处理函数
-type HandlerFunc func(ctx context.Context, req proto.Message) ([]byte, error)
+type HandlerFunc func(ctx context.Context, req proto.Message) (proto.Message, int)
 
 type Handler struct {
 	f   HandlerFunc   // 业务处理函数
@@ -100,12 +97,12 @@ func GetMsgHandler() *MsgHandle {
 }
 
 // DoMsgHandler 处理业务
-func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) ([]byte, error) {
+func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) (proto.Message, int) {
 	msgID := genMsgID(req.GrpID, req.CmdID)
 	h, ok := m.Apis[msgID]
 	if !ok {
-		glog.Slog.ErrorF(ctx, "DoMsgHandler msgID: %v not found", msgID)
-		return nil, gerr.New("msgID not found")
+		glog.Slog.ErrorKVs(ctx, "DoMsgHandler", "msgID not found,MsgID", msgID)
+		return nil, commons.UnKnowError
 	}
 
 	// 解析pb消息
@@ -113,7 +110,8 @@ func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) ([]byte, error) 
 	if h.req != nil {
 		dataReq = proto.Clone(h.req)
 		if err := proto.Unmarshal(req.Data, dataReq); err != nil {
-			return nil, gerr.New("unmarshal req pb msg err: %v", err)
+			glog.Slog.ErrorKVs(ctx, "DoMsgHandler", "unmarshal req pb msg err", err)
+			return nil, commons.UnKnowError
 		}
 	}
 

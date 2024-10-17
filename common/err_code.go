@@ -1,15 +1,29 @@
 package common
 
-import (
-	"github.com/qiafan666/gotato/commons"
-)
+import "github.com/qiafan666/gotato/commons/gcommon"
 
-// Error define the error code
-const (
-	Error = 1000
-)
+func GetCodeMsg() map[int]string {
+	return gcommon.MapMerge(ChineseHttpCodeMsg, ChineseWsCodeMsg)
+}
 
-// ChineseCodeMsg local code and msg
-var ChineseCodeMsg = map[commons.ResponseCode]string{
+// http error
+const ()
+
+// ChineseHttpCodeMsg http code	and msg
+var ChineseHttpCodeMsg = map[int]string{
 	1000: "业务错误",
+}
+
+// ws error
+const (
+	ConnOverMaxNumLimit = 20001 // 超过最大连接数限制
+	ConnArgsErr         = 20002 // 连接参数错误
+	InvalidRequestError = 20003 // 无效的请求
+)
+
+// ChineseWsCodeMsg ws code	and msg
+var ChineseWsCodeMsg = map[int]string{
+	20001: "超过最大连接数限制",
+	20002: "连接参数错误",
+	20003: "无效的请求",
 }

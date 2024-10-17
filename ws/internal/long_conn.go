@@ -144,7 +144,7 @@ func (d *GWebSocket) RespondWithError(err error, w http.ResponseWriter, r *http.
 }
 
 func (d *GWebSocket) RespondWithSuccess() error {
-	data, err := json.Marshal(ggin.ApiSuccessWithMsg(nil, "init suc"))
+	data, err := json.Marshal(ggin.ApiSuccess(nil, "", "init suc"))
 	if err != nil {
 		_ = d.Close()
 		return gerr.WrapMsg(err, "json marshal failed")

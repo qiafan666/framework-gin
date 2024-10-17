@@ -5,7 +5,6 @@ import (
 	"framework-gin/model"
 	"framework-gin/pojo/request"
 	"framework-gin/pojo/response"
-	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"gorm.io/gorm"
 	"sync"
@@ -13,10 +12,10 @@ import (
 
 // PortalService service layer interface
 type PortalService interface {
-	UserCreate(info request.UserCreate) (out response.UserCreate, code commons.ResponseCode, err error)
-	UserDelete(info request.UserDelete) (out response.UserDelete, code commons.ResponseCode, err error)
-	UserUpdate(info request.UserUpdate) (out response.UserUpdate, code commons.ResponseCode, err error)
-	UserList(info request.UserList) (out response.UserList, code commons.ResponseCode, err error)
+	UserCreate(info request.UserCreate) (out response.UserCreate, code int, err error)
+	UserDelete(info request.UserDelete) (out response.UserDelete, code int, err error)
+	UserUpdate(info request.UserUpdate) (out response.UserUpdate, code int, err error)
+	UserList(info request.UserList) (out response.UserList, code int, err error)
 }
 
 var portalServiceIns *portalServiceImp
@@ -41,19 +40,19 @@ type portalServiceImp struct {
 // -----------------------User service layer implementation------------------------
 // ================================================================================
 
-func (g portalServiceImp) UserCreate(info request.UserCreate) (out response.UserCreate, code commons.ResponseCode, err error) {
+func (g portalServiceImp) UserCreate(info request.UserCreate) (out response.UserCreate, code int, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserDelete(info request.UserDelete) (out response.UserDelete, code commons.ResponseCode, err error) {
+func (g portalServiceImp) UserDelete(info request.UserDelete) (out response.UserDelete, code int, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserUpdate(info request.UserUpdate) (out response.UserUpdate, code commons.ResponseCode, err error) {
+func (g portalServiceImp) UserUpdate(info request.UserUpdate) (out response.UserUpdate, code int, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserList(info request.UserList) (out response.UserList, code commons.ResponseCode, err error) {
+func (g portalServiceImp) UserList(info request.UserList) (out response.UserList, code int, err error) {
 
 	count, err := g.dao.WithContext(info.Ctx).Count(model.User{}, nil, nil)
 	if err != nil {

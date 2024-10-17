@@ -62,7 +62,7 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 				case requestChs[i] <- req: // 尝试将请求发送到通道
 				default:
 					// 当通道满时，记录处理过慢的日志
-					glog.Slog.DebugKVs(function.WsCtx, "user online processing is too slow", nil)
+					glog.Slog.DebugKVs(function.WsCtx, "ChangeOnlineStatus user online processing is too slow")
 				}
 			}
 		}
@@ -82,7 +82,7 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 			case requestChs[i] <- req: // 尝试将请求发送到通道
 			default:
 				// 当通道满时，记录处理过慢的错误日志
-				glog.Slog.ErrorKVs(function.WsCtx, "user online processing is too slow")
+				glog.Slog.ErrorKVs(function.WsCtx, "ChangeOnlineStatus user online processing is too slow")
 			}
 		}
 	}
@@ -96,11 +96,10 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 		for _, status := range req.Status {
 			err := ws.rdbOnline.SetUserOnline(ctx, status.UserID, status.Online, status.Offline)
 			if err != nil {
-				glog.Slog.ErrorKVs(ctx, "set user online status error", "err", err, "userID", status.UserID, "online", status.Online, "offline", status.Offline)
+				glog.Slog.ErrorKVs(ctx, "ChangeOnlineStatus", "set user online status err", err, "userID", status.UserID, "online", status.Online, "offline", status.Offline)
 			}
 		}
-		// TODO 更新用户在线状态
-		glog.Slog.DebugKVs(ctx, "update user online status", "req", req)
+		glog.Slog.DebugKVs(ctx, "ChangeOnlineStatus", "req", req)
 	}
 
 	// 启动多个 goroutine 处理用户在线状态的批量更新请求
@@ -120,10 +119,10 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 		case now := <-renewalTicker.C: // 每次 renewalTicker 触发时，检查需要更新的用户状态
 			deadline := now.Add(-constant.OnlineExpire / 3)
 			users := ws.clients.GetAllUserStatus(deadline, now) // 获取当前时间段内的用户状态
-			glog.Slog.DebugKVs(function.WsCtx, "renewal ticker", "deadline", deadline, "nowtime", now, "num", len(users), "users", users)
+			glog.Slog.DebugKVs(function.WsCtx, "CheckOnlineStatus renewal ticker", "deadline", deadline, "nowtime", now, "num", len(users), "users", users)
 			pushUserState(users...) // 推送用户状态
 		case state := <-ws.clients.UserState(): // 当有用户状态变化时
-			glog.Slog.DebugKVs(function.WsCtx, "OnlineCache user online change", "userID", state.UserID, "online", state.Online, "offline", state.Offline)
+			glog.Slog.DebugKVs(function.WsCtx, "CheckOnlineStatus OnlineCache user online change", "userID", state.UserID, "online", state.Online, "offline", state.Offline)
 			pushUserState(state) // 推送单个用户的状态变化
 		}
 	}

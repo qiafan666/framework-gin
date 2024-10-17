@@ -22,7 +22,6 @@ const (
 const (
 	HeaderAuthorization                 = "Authorization"
 	HeaderLanguage                      = "Language"
-	HeaderSendID                        = "SendID"
 	HeaderPlatformID                    = "PlatformID"
 	HeaderCompression                   = "Compression"
 	HeaderSendResponse                  = "SendResponse"
