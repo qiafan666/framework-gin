@@ -158,23 +158,23 @@ func (ws *WsServer) registerClient(client *Client) {
 		clientOK   bool
 		oldClients []*Client
 	)
-	oldClients, userOK, clientOK = ws.clients.Get(client.parseToken.UserID, client.PlatformID)
+	oldClients, userOK, clientOK = ws.clients.Get(client.parseToken.UserId, client.PlatformID)
 	if !userOK {
-		ws.clients.Set(client.parseToken.UserID, client)
-		glog.Slog.DebugKVs(client.userCtx.Ctx, "registerClient,user not exist", "userID", client.parseToken.UserID, "platformID", client.PlatformID)
+		ws.clients.Set(client.parseToken.UserId, client)
+		glog.Slog.DebugKVs(client.userCtx.Ctx, "registerClient,user not exist", "userID", client.parseToken.UserId, "platformID", client.PlatformID)
 		ws.onlineUserNum.Add(1)
 		ws.onlineUserConnNum.Add(1)
 	} else {
 		ws.multiTerminalLoginChecker(clientOK, oldClients, client)
-		glog.Slog.DebugKVs(client.userCtx.Ctx, "registerClient,user exist", "userID", client.parseToken.UserID, "platformID", client.PlatformID)
+		glog.Slog.DebugKVs(client.userCtx.Ctx, "registerClient,user exist", "userID", client.parseToken.UserId, "platformID", client.PlatformID)
 		if clientOK {
-			ws.clients.Set(client.parseToken.UserID, client)
+			ws.clients.Set(client.parseToken.UserId, client)
 			// 当前平台连接已经存在，增加连接数
-			glog.Slog.InfoKVs(client.userCtx.Ctx, "registerClient,repeat login", "userID", client.parseToken.UserID, "platformID",
+			glog.Slog.InfoKVs(client.userCtx.Ctx, "registerClient,repeat login", "userID", client.parseToken.UserId, "platformID",
 				client.PlatformID, "old remote addr", getRemoteAdders(oldClients))
 			ws.onlineUserConnNum.Add(1)
 		} else {
-			ws.clients.Set(client.parseToken.UserID, client)
+			ws.clients.Set(client.parseToken.UserId, client)
 			ws.onlineUserConnNum.Add(1)
 		}
 	}
@@ -205,7 +205,7 @@ func getRemoteAdders(client []*Client) string {
 
 // KickUserConn 踢人 分布式环境下使用
 func (ws *WsServer) KickUserConn(client *Client) error {
-	ws.clients.DeleteClients(client.parseToken.UserID, []*Client{client})
+	ws.clients.DeleteClients(client.parseToken.UserId, []*Client{client})
 	return client.KickOnlineMessage()
 }
 
@@ -221,7 +221,7 @@ func (ws *WsServer) multiTerminalLoginChecker(clientOK bool, oldClients []*Clien
 		if !clientOK {
 			return
 		}
-		ws.clients.DeleteClients(newClient.parseToken.UserID, oldClients)
+		ws.clients.DeleteClients(newClient.parseToken.UserId, oldClients)
 		for _, c := range oldClients {
 			err := c.KickOnlineMessage()
 			if err != nil {
@@ -233,7 +233,7 @@ func (ws *WsServer) multiTerminalLoginChecker(clientOK bool, oldClients []*Clien
 
 func (ws *WsServer) unregisterClient(client *Client) {
 	defer ws.clientPool.Put(client)
-	isDeleteUser := ws.clients.DeleteClients(client.parseToken.UserID, []*Client{client})
+	isDeleteUser := ws.clients.DeleteClients(client.parseToken.UserId, []*Client{client})
 	if isDeleteUser {
 		ws.onlineUserNum.Add(-1)
 	}
@@ -311,13 +311,13 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 
 func (ws *WsServer) ParseToken(connContext *UserConnContext, token string) (*pb.ParseToken, error) {
 	if token == "test" {
-		return &pb.ParseToken{UserID: "ning"}, nil
+		return &pb.ParseToken{UserId: "ning"}, nil
 	}
 	resultMap, err := middleware.ParseToken(connContext.Req.Header.Get(common.HeaderAuthorization))
 	if err != nil {
 		return &pb.ParseToken{}, err
 	}
 	return &pb.ParseToken{
-		UserID: gcast.ToString(resultMap["user_id"]),
+		UserId: gcast.ToString(resultMap["user_id"]),
 	}, nil
 }

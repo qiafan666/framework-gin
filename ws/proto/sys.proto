@@ -17,11 +17,3 @@ message SubUserOnlineStatusElem {
 }
 
 
-// grp:2 cmd:1 业务流程检查
-message ReqHealth {
-  string msg = 1;
-}
-message RspHealth {
-  string msg = 1;
-}
-

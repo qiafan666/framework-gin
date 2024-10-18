@@ -34,7 +34,7 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 	// 将 UserState 转换为 pb.UserOnlineStatus 格式，用于网络传输
 	local2pb := func(u UserState) *pb.UserOnlineStatus {
 		return &pb.UserOnlineStatus{
-			UserID:  u.UserID,
+			UserId:  u.UserID,
 			Online:  u.Online,
 			Offline: u.Offline,
 		}
@@ -94,9 +94,9 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 		defer cancel()
 
 		for _, status := range req.Status {
-			err := ws.rdbOnline.SetUserOnline(ctx, status.UserID, status.Online, status.Offline)
+			err := ws.rdbOnline.SetUserOnline(ctx, status.UserId, status.Online, status.Offline)
 			if err != nil {
-				glog.Slog.ErrorKVs(ctx, "ChangeOnlineStatus", "set user online status err", err, "userID", status.UserID, "online", status.Online, "offline", status.Offline)
+				glog.Slog.ErrorKVs(ctx, "ChangeOnlineStatus", "set user online status err", err, "userID", status.UserId, "online", status.Online, "offline", status.Offline)
 			}
 		}
 		glog.Slog.DebugKVs(ctx, "ChangeOnlineStatus", "req", req)

@@ -169,7 +169,7 @@ func (c *Client) handleMessage(message []byte) error {
 	}
 
 	c.userCtx.Ctx = WithMustInfoCtx(
-		[]any{constant.PlatformIDToName(c.PlatformID), c.userCtx.GetConnID(), c.parseToken.UserID, binaryReq.RequestID, c.userCtx.RemoteAddr},
+		[]any{constant.PlatformIDToName(c.PlatformID), c.userCtx.GetConnID(), c.parseToken.UserId, binaryReq.RequestID, c.userCtx.RemoteAddr},
 	)
 
 	glog.Slog.DebugKVs(c.userCtx.Ctx, "handleMessage", "req", binaryReq.String())

@@ -42,7 +42,7 @@ func (ws *WsServer) pushUserIDOnlineStatus(ctx context.Context, userID string, p
 	for _, client := range clients {
 		if err = client.PushUserOnlineStatus(onlineStatus); err != nil {
 			glog.Slog.ErrorKVs(ctx, "UserSubscribeOnlineStatusNotification push failed", "err", err,
-				"userID", client.parseToken.UserID, "platformID", client.PlatformID, "changeUserID", userID, "changePlatformID", platformIDs)
+				"userID", client.parseToken.UserId, "platformID", client.PlatformID, "changeUserID", userID, "changePlatformID", platformIDs)
 		}
 	}
 }

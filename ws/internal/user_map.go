@@ -128,7 +128,7 @@ func (u *userMap) Set(userID string, client *Client) {
 		}
 		u.data[userID] = result
 	}
-	u.push(client.parseToken.UserID, result, nil)
+	u.push(client.parseToken.UserId, result, nil)
 }
 
 func (u *userMap) DeleteClients(userID string, clients []*Client) (isDeleteUser bool) {
