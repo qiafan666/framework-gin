@@ -5,7 +5,6 @@ import (
 	"framework-gin/ws/constant"
 	"framework-gin/ws/proto/pb"
 	"github.com/golang/protobuf/proto"
-	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/glog"
@@ -187,7 +186,7 @@ func (c *Client) handleMessage(message []byte) error {
 	} else {
 		data, code = c.logicHandler.DoMsgHandler(c.userCtx.Ctx, binaryReq)
 		glog.Slog.DebugKVs(c.userCtx.Ctx, "handleMessage DoMsgHandler", "err",
-			commons.GetCodeAndMsg(code, c.userCtx.Language))
+			gerr.GetCodeAndMsg(code, c.userCtx.Language))
 	}
 
 	return c.replyMessage(c.userCtx.Ctx, binaryReq, data, code)
@@ -218,14 +217,15 @@ func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Me
 		marshal, err := proto.Marshal(data)
 		if err != nil {
 			glog.Slog.ErrorKVs(ctx, "replyMessage", "marshal data error", err)
-			mReply.Code = commons.UnKnowError
+			mReply.Code = gerr.UnKnowError
 		} else {
 			mReply.Data = marshal
 		}
 	} else {
 		mReply.Code = code
-		mReply.Msg = commons.GetCodeAndMsg(code, c.userCtx.Language)
+		mReply.Msg = gerr.GetCodeAndMsg(code, c.userCtx.Language)
 	}
+	glog.Slog.DebugKVs(ctx, "replyMessage", "resp", mReply.String())
 
 	err := c.writeBinaryMsg(mReply)
 	if err != nil {

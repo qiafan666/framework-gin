@@ -6,16 +6,17 @@ import (
 	"framework-gin/pojo/request"
 	"framework-gin/pojo/response"
 	"github.com/qiafan666/gotato/commons/gcommon"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"gorm.io/gorm"
 	"sync"
 )
 
 // PortalService service layer interface
 type PortalService interface {
-	UserCreate(info request.UserCreate) (out response.UserCreate, code int, err error)
-	UserDelete(info request.UserDelete) (out response.UserDelete, code int, err error)
-	UserUpdate(info request.UserUpdate) (out response.UserUpdate, code int, err error)
-	UserList(info request.UserList) (out response.UserList, code int, err error)
+	UserCreate(info request.UserCreate) (out response.UserCreate, err error)
+	UserDelete(info request.UserDelete) (out response.UserDelete, err error)
+	UserUpdate(info request.UserUpdate) (out response.UserUpdate, err error)
+	UserList(info request.UserList) (out response.UserList, err error)
 }
 
 var portalServiceIns *portalServiceImp
@@ -40,23 +41,23 @@ type portalServiceImp struct {
 // -----------------------User service layer implementation------------------------
 // ================================================================================
 
-func (g portalServiceImp) UserCreate(info request.UserCreate) (out response.UserCreate, code int, err error) {
+func (g portalServiceImp) UserCreate(info request.UserCreate) (out response.UserCreate, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserDelete(info request.UserDelete) (out response.UserDelete, code int, err error) {
+func (g portalServiceImp) UserDelete(info request.UserDelete) (out response.UserDelete, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserUpdate(info request.UserUpdate) (out response.UserUpdate, code int, err error) {
+func (g portalServiceImp) UserUpdate(info request.UserUpdate) (out response.UserUpdate, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserList(info request.UserList) (out response.UserList, code int, err error) {
+func (g portalServiceImp) UserList(info request.UserList) (out response.UserList, err error) {
 
 	count, err := g.dao.WithContext(info.Ctx).Count(model.User{}, nil, nil)
 	if err != nil {
-		return response.UserList{}, 0, err
+		return response.UserList{}, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
 	}
 
 	var users []model.User
@@ -64,7 +65,7 @@ func (g portalServiceImp) UserList(info request.UserList) (out response.UserList
 		return db.Scopes(gcommon.Paginate(info.CurrentPage, info.PageCount))
 	}, &users)
 	if err != nil {
-		return response.UserList{}, 0, err
+		return response.UserList{}, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
 	}
 
 	out.UserList = gcommon.SliceConvert(users, func(user model.User) response.User {

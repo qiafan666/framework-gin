@@ -15,7 +15,7 @@ CREATE TABLE `user` (
   `age` int NOT NULL COMMENT '年龄',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uix_uuid` (`uuid`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 ******sql******/
 // User [...]
 type User struct {

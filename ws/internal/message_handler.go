@@ -4,8 +4,8 @@ import (
 	"context"
 	"framework-gin/common/function"
 	"github.com/golang/protobuf/proto"
-	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcast"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/glog"
 	"sync"
 )
@@ -102,7 +102,7 @@ func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) (proto.Message, 
 	h, ok := m.Apis[msgID]
 	if !ok {
 		glog.Slog.ErrorKVs(ctx, "DoMsgHandler", "msgID not found,MsgID", msgID)
-		return nil, commons.UnKnowError
+		return nil, gerr.UnKnowError
 	}
 
 	// 解析pb消息
@@ -111,7 +111,7 @@ func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) (proto.Message, 
 		dataReq = proto.Clone(h.req)
 		if err := proto.Unmarshal(req.Data, dataReq); err != nil {
 			glog.Slog.ErrorKVs(ctx, "DoMsgHandler", "unmarshal req pb msg err", err)
-			return nil, commons.UnKnowError
+			return nil, gerr.UnKnowError
 		}
 	}
 

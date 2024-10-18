@@ -5,8 +5,7 @@ import (
 	"framework-gin/pojo/request"
 	"framework-gin/services"
 	"github.com/gin-gonic/gin"
-	"github.com/qiafan666/gotato/commons"
-	"net/http"
+	"github.com/qiafan666/gotato/commons/ggin"
 	"sync"
 )
 
@@ -41,13 +40,13 @@ type PortalControllerImp struct {
 // @Success 200 {object} response.UserCreate "User创建返回结果"
 func (g *PortalControllerImp) UserCreate(c *gin.Context) {
 	input := request.UserCreate{}
-	if bindCode, bindErr := function.BindAndValid(&input, c); bindErr != nil {
-		c.JSON(http.StatusOK, commons.BuildFailedWithMsg(bindCode, bindErr.Error(), input.RequestId))
+	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
+		ggin.GinError(c, bindErr)
 	} else {
-		if out, code, err := g.portalService.UserCreate(input); err != nil {
-			c.JSON(http.StatusOK, commons.BuildFailed(code, input.Language, input.RequestId))
+		if out, err := g.portalService.UserCreate(input); err != nil {
+			ggin.GinError(c, err)
 		} else {
-			c.JSON(http.StatusOK, commons.BuildSuccess(out, input.Language, input.RequestId))
+			ggin.GinSuccess(c, out)
 		}
 	}
 }
@@ -63,13 +62,13 @@ func (g *PortalControllerImp) UserCreate(c *gin.Context) {
 // @Success 200 {object} response.UserDelete "User删除返回结果"
 func (g *PortalControllerImp) UserDelete(c *gin.Context) {
 	input := request.UserDelete{}
-	if bindCode, bindErr := function.BindAndValid(&input, c); bindErr != nil {
-		c.JSON(http.StatusOK, commons.BuildFailedWithMsg(bindCode, bindErr.Error(), input.RequestId))
+	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
+		ggin.GinError(c, bindErr)
 	} else {
-		if out, code, err := g.portalService.UserDelete(input); err != nil {
-			c.JSON(http.StatusOK, commons.BuildFailed(code, input.Language, input.RequestId))
+		if out, err := g.portalService.UserDelete(input); err != nil {
+			ggin.GinError(c, err)
 		} else {
-			c.JSON(http.StatusOK, commons.BuildSuccess(out, input.Language, input.RequestId))
+			ggin.GinSuccess(c, out)
 		}
 	}
 }
@@ -85,13 +84,13 @@ func (g *PortalControllerImp) UserDelete(c *gin.Context) {
 // @Success 200 {object} response.UserUpdate "User更新返回结果"
 func (g *PortalControllerImp) UserUpdate(c *gin.Context) {
 	input := request.UserUpdate{}
-	if bindCode, bindErr := function.BindAndValid(&input, c); bindErr != nil {
-		c.JSON(http.StatusOK, commons.BuildFailedWithMsg(bindCode, bindErr.Error(), input.RequestId))
+	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
+		ggin.GinError(c, bindErr)
 	} else {
-		if out, code, err := g.portalService.UserUpdate(input); err != nil {
-			c.JSON(http.StatusOK, commons.BuildFailed(code, input.Language, input.RequestId))
+		if out, err := g.portalService.UserUpdate(input); err != nil {
+			ggin.GinError(c, err)
 		} else {
-			c.JSON(http.StatusOK, commons.BuildSuccess(out, input.Language, input.RequestId))
+			ggin.GinSuccess(c, out)
 		}
 	}
 }
@@ -107,13 +106,13 @@ func (g *PortalControllerImp) UserUpdate(c *gin.Context) {
 // @Success 200 {object} response.UserList "User列表返回结果"
 func (g *PortalControllerImp) UserList(c *gin.Context) {
 	input := request.UserList{}
-	if bindCode, bindErr := function.BindAndValid(&input, c); bindErr != nil {
-		c.JSON(http.StatusOK, commons.BuildFailedWithMsg(bindCode, bindErr.Error(), input.RequestId))
+	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
+		ggin.GinError(c, bindErr)
 	} else {
-		if out, code, err := g.portalService.UserList(input); err != nil {
-			c.JSON(http.StatusOK, commons.BuildFailed(code, input.Language, input.RequestId))
+		if out, err := g.portalService.UserList(input); err != nil {
+			ggin.GinError(c, err)
 		} else {
-			c.JSON(http.StatusOK, commons.BuildSuccess(out, input.Language, input.RequestId))
+			ggin.GinSuccess(c, out)
 		}
 	}
 }

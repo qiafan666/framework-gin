@@ -5,7 +5,7 @@ import (
 	"framework-gin/common/function"
 	"framework-gin/pojo/request"
 	"github.com/gin-gonic/gin"
-	"github.com/qiafan666/gotato/commons"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/v2/middleware"
 	"net/http"
 	"sync"
@@ -30,7 +30,7 @@ func Common(ctx *gin.Context) {
 	//get language
 	language := ctx.Request.Header.Get(common.HeaderLanguage)
 	if language == "" {
-		language = commons.DefaultLanguage
+		language = gerr.DefaultLanguage
 	}
 
 	ctx.Set(common.BaseRequest, request.BaseRequest{

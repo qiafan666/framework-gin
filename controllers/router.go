@@ -16,9 +16,9 @@ func RegisterRouter(r *gin.Engine) {
 
 	portalGroup := r.Group("v1/portal")
 	{
-		portalGroup.POST("/user/create", portalController.UserCreate)
-		portalGroup.POST("/user/delete", portalController.UserDelete)
-		portalGroup.POST("/user/update", portalController.UserUpdate)
+		//portalGroup.POST("/user/create", portalController.UserCreate)
+		//portalGroup.POST("/user/delete", portalController.UserDelete)
+		//portalGroup.POST("/user/update", portalController.UserUpdate)
 		portalGroup.POST("/user/list", portalController.UserList)
 	}
 }

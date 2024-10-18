@@ -6,14 +6,14 @@ import (
 	"framework-gin/pojo/request"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcommon"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/glog"
 	"reflect"
 )
 
 // BindAndValid binds and validates data
-func BindAndValid(entity interface{}, ctx *gin.Context) (int, error) {
+func BindAndValid(entity interface{}, ctx *gin.Context) error {
 
 	//set base request parameter
 	object := reflect.ValueOf(entity)
@@ -34,15 +34,15 @@ func BindAndValid(entity interface{}, ctx *gin.Context) (int, error) {
 	err := ctx.MustBindWith(entity, binding.JSON)
 	if err != nil {
 		glog.Slog.ErrorF(ctx.Value("ctx").(context.Context), "BindAndValid error: %v", err)
-		return commons.ParameterError, err
+		return gerr.NewLang(gerr.ValidateError, baseRequest.Language, baseRequest.RequestId)
 	}
 
 	if err = gcommon.Validate(entity); err != nil {
 		glog.Slog.ErrorF(ctx.Value("ctx").(context.Context), "Validate error: %v", err)
-		return commons.ValidateError, err
+		return gerr.NewLang(gerr.ValidateError, baseRequest.Language, baseRequest.RequestId)
 	}
 
-	return commons.OK, nil
+	return nil
 }
 
 func GetTraceId(ctx *gin.Context) string {

@@ -3,8 +3,8 @@ package internal
 import (
 	"context"
 	"framework-gin/common"
+	"framework-gin/common/errs"
 	"framework-gin/ws/constant"
-	"github.com/qiafan666/gotato/commons"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gerr"
@@ -62,9 +62,8 @@ func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnCont
 		Path:       req.URL.Path,
 		Method:     req.Method,
 		RemoteAddr: req.RemoteAddr,
-
-		ConnID: connID,
-		Ctx:    ctx,
+		ConnID:     connID,
+		Ctx:        ctx,
 	}
 	x.Language = x.GetLanguage()
 	return x
@@ -109,12 +108,15 @@ func (c *UserConnContext) GetConnID() string {
 }
 
 func (c *UserConnContext) GetLanguage() string {
-	if c.Req.Header.Get(common.HeaderLanguage) == "" ||
-		c.Req.Header.Get(common.HeaderLanguage) != commons.MsgLanguageChinese ||
-		c.Req.Header.Get(common.HeaderLanguage) != commons.MsgLanguageEnglish {
-		return commons.DefaultLanguage
+	headerLanguage := c.Req.Header.Get(common.HeaderLanguage)
+
+	if headerLanguage == "" {
+		return gerr.DefaultLanguage
 	}
-	return c.Req.Header.Get(common.HeaderLanguage)
+	if headerLanguage != gerr.MsgLanguageChinese && headerLanguage != gerr.MsgLanguageEnglish {
+		return gerr.DefaultLanguage
+	}
+	return headerLanguage
 }
 
 func (c *UserConnContext) GetPlatformID() int {
@@ -153,15 +155,15 @@ func (c *UserConnContext) SetToken(token string) {
 func (c *UserConnContext) ParseEssentialArgs() error {
 	_, exists := c.GetHeader(common.HeaderAuthorization)
 	if !exists {
-		return gerr.NewLangCodeError(common.ConnArgsErr, c.Language).WithDetail("auth token is empty")
+		return gerr.NewLang(errs.ConnArgsErr, c.Language).WithDetail("auth token is empty")
 	}
 	platformIDStr, exists := c.GetHeader(common.HeaderPlatformID)
 	if !exists {
-		return gerr.NewLangCodeError(common.ConnArgsErr, c.Language).WithDetail("platformID is empty")
+		return gerr.NewLang(errs.ConnArgsErr, c.Language).WithDetail("platformID is empty")
 	}
 	_, err := strconv.Atoi(platformIDStr)
 	if err != nil {
-		return gerr.NewLangCodeError(common.ConnArgsErr, c.Language).WithDetail("platformID is not a number")
+		return gerr.NewLang(errs.ConnArgsErr, c.Language).WithDetail("platformID is not a number")
 	}
 	return nil
 }

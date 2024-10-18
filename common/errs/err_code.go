@@ -1,17 +1,19 @@
-package common
+package errs
 
 import "github.com/qiafan666/gotato/commons/gcommon"
 
-func GetCodeMsg() map[int]string {
+func ChineseCodeMsg() map[int]string {
 	return gcommon.MapMerge(ChineseHttpCodeMsg, ChineseWsCodeMsg)
 }
 
 // http error
-const ()
+const (
+	BusinessError = 10000 // 业务错误
+)
 
 // ChineseHttpCodeMsg http code	and msg
 var ChineseHttpCodeMsg = map[int]string{
-	1000: "业务错误",
+	10000: "业务错误",
 }
 
 // ws error

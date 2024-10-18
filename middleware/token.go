@@ -7,6 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/v2"
 	"net/http"
 	"time"
@@ -41,7 +42,7 @@ func CheckToken(ctx *gin.Context) {
 		//check jwt
 		resultMap, err := ParseToken(ctx.Request.Header.Get(common.HeaderAuthorization))
 		if err != nil || len(resultMap) == 0 {
-			ctx.JSON(http.StatusOK, commons.BuildFailed(commons.TokenError, language, requestId))
+			ctx.JSON(http.StatusOK, commons.BuildFailed(gerr.TokenError, language, requestId))
 			ctx.Abort()
 			return
 		}

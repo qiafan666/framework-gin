@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"framework-gin/common"
+	"framework-gin/common/errs"
 	"framework-gin/common/function"
 	"framework-gin/middleware"
 	"framework-gin/ws/constant"
@@ -250,7 +251,7 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 	// 检查当前在线用户连接数是否超过最大限制
 	if ws.onlineUserConnNum.Load() >= ws.wsMaxConnNum {
 		// 如果超过最大连接数限制，通过HTTP返回错误并停止处理
-		ggin.HttpError(connCtx.RespWriter, gerr.NewLangCodeError(common.ConnOverMaxNumLimit, connCtx.Language))
+		ggin.HttpError(connCtx.RespWriter, gerr.NewLang(errs.ConnOverMaxNumLimit, connCtx.Language))
 		return
 	}
 
