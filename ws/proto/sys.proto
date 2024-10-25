@@ -16,4 +16,15 @@ message SubUserOnlineStatusElem {
   repeated int32 onlinePlatformIDs = 2;
 }
 
-
+// grp:1 cmd:3 推送消息给其他用户
+message ReqPushMsgToOther {
+  bool all = 1; // 是否推送给所有用户
+  string fromUserID = 2; // 推送消息的用户ID
+  string toUserID = 3; // 推送给指定用户
+  int32 platformID = 4; // 推送消息的平台ID
+  int32 grpID = 5; // 推送消息的群组ID
+  int32 cmdID = 6; // 推送消息的命令ID
+  bytes data = 7; // 消息内容
+}
+message RspPushMsgToOther {
+}

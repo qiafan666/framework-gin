@@ -24,6 +24,8 @@ type UserConnContext struct {
 	RemoteAddr string
 	ConnID     string
 	Language   string
+	PlatformID int
+	IsCompress bool
 	Ctx        context.Context
 }
 
@@ -63,8 +65,10 @@ func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnCont
 		Method:     req.Method,
 		RemoteAddr: req.RemoteAddr,
 		ConnID:     connID,
+		PlatformID: gcast.ToInt(req.Header.Get(common.HeaderPlatformID)),
 		Ctx:        ctx,
 	}
+	x.IsCompress = x.GetCompression()
 	x.Language = x.GetLanguage()
 	return x
 }

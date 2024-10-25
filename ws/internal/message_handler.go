@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"context"
 	"framework-gin/common/function"
 	"github.com/golang/protobuf/proto"
 	"github.com/qiafan666/gotato/commons/gcast"
@@ -32,7 +31,7 @@ var reqPool = sync.Pool{
 	},
 }
 
-func getReq() *Req {
+func GetReq() *Req {
 	req := reqPool.Get().(*Req)
 	req.Data = nil
 	req.RequestID = ""
@@ -41,7 +40,7 @@ func getReq() *Req {
 	return req
 }
 
-func freeReq(req *Req) {
+func FreeReq(req *Req) {
 	reqPool.Put(req)
 }
 
@@ -68,7 +67,7 @@ func (r *Resp) String() string {
 var handler *MsgHandle
 
 // HandlerFunc 消息处理函数
-type HandlerFunc func(ctx context.Context, req proto.Message) (proto.Message, int)
+type HandlerFunc func(client *Client, req proto.Message) (proto.Message, int)
 
 type Handler struct {
 	f   HandlerFunc   // 业务处理函数
@@ -97,11 +96,11 @@ func GetMsgHandler() *MsgHandle {
 }
 
 // DoMsgHandler 处理业务
-func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) (proto.Message, int) {
+func (m *MsgHandle) DoMsgHandler(client *Client, req *Req) (proto.Message, int) {
 	msgID := genMsgID(req.GrpID, req.CmdID)
 	h, ok := m.Apis[msgID]
 	if !ok {
-		glog.Slog.ErrorKVs(ctx, "DoMsgHandler", "msgID not found,MsgID", msgID)
+		glog.Slog.ErrorKVs(client.UserCtx.Ctx, "DoMsgHandler", "msgID not found,MsgID", msgID)
 		return nil, gerr.UnKnowError
 	}
 
@@ -110,13 +109,13 @@ func (m *MsgHandle) DoMsgHandler(ctx context.Context, req *Req) (proto.Message, 
 	if h.req != nil {
 		dataReq = proto.Clone(h.req)
 		if err := proto.Unmarshal(req.Data, dataReq); err != nil {
-			glog.Slog.ErrorKVs(ctx, "DoMsgHandler", "unmarshal req pb msg err", err)
+			glog.Slog.ErrorKVs(client.UserCtx.Ctx, "DoMsgHandler", "unmarshal req pb msg err", err)
 			return nil, gerr.UnKnowError
 		}
 	}
 
 	// 执行业务
-	return h.f(ctx, dataReq)
+	return h.f(client, dataReq)
 }
 
 // AddHandler 为消息添加具体的处理逻辑
@@ -134,11 +133,27 @@ func (m *MsgHandle) AddHandler(grp, cmd uint8, req, rsp proto.Message, f Handler
 	}
 }
 
-// Close 关闭
-func (m *MsgHandle) Close() error {
-	return nil
+// GetPbReq 获取请求pb
+func (m *MsgHandle) GetPbReq(grpID, cmdID uint8) (proto.Message, int) {
+	genID := genMsgID(grpID, cmdID)
+	h, ok := m.Apis[genID]
+	if ok {
+		return h.req, gerr.OK
+	}
+	return nil, gerr.ParameterError
 }
 
+// GetPbRsp 获取返回pb
+func (m *MsgHandle) GetPbRsp(msgID, grpID uint8) (proto.Message, int) {
+	genID := genMsgID(grpID, msgID)
+	h, ok := m.Apis[genID]
+	if ok {
+		return h.rsp, gerr.OK
+	}
+	return nil, gerr.ParameterError
+}
+
+// 根据
 // genMsgID 通过grp cmd生成msgID key
 func genMsgID(grp, cmd uint8) uint32 {
 	return uint32(grp)*1000 + uint32(cmd)

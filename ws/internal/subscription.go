@@ -42,20 +42,14 @@ func (ws *WsServer) pushUserIDOnlineStatus(ctx context.Context, userID string, p
 	for _, client := range clients {
 		if err = client.PushUserOnlineStatus(onlineStatus); err != nil {
 			glog.Slog.ErrorKVs(ctx, "UserSubscribeOnlineStatusNotification push failed", "err", err,
-				"userID", client.parseToken.UserId, "platformID", client.PlatformID, "changeUserID", userID, "changePlatformID", platformIDs)
+				"userID", client.parseToken.UserId, "platformID", client.UserCtx.PlatformID, "changeUserID", userID, "changePlatformID", platformIDs)
 		}
 	}
 }
 
 // SubUserOnlineStatus 处理客户端订阅或取消订阅用户在线状态的请求。
 // 它将请求的数据解析后更新订阅状态，并返回当前订阅的用户的在线状态。
-func (ws *WsServer) SubUserOnlineStatus(ctx context.Context, client *Client, data *Req) (proto.Message, int) {
-	var sub pb.ReqSubUserOnlineStatus
-	// 解析请求数据，如果解析失败则返回错误。
-	if err := proto.Unmarshal(data.Data, &sub); err != nil {
-		glog.Slog.ErrorKVs(ctx, "SubUserOnlineStatus proto.Unmarshal", "err", err, "data", data.Data)
-		return nil, gerr.UnKnowError
-	}
+func (ws *WsServer) SubUserOnlineStatus(client *Client, sub *pb.ReqSubUserOnlineStatus) (*pb.RspSubUserOnlineStatus, int) {
 	// 更新订阅的用户和取消订阅的用户。
 	ws.subscription.Sub(client, sub.SubscribeUserID, sub.UnsubscribeUserID)
 
@@ -64,9 +58,9 @@ func (ws *WsServer) SubUserOnlineStatus(ctx context.Context, client *Client, dat
 	if len(sub.SubscribeUserID) > 0 {
 		resp.Subscribers = make([]*pb.SubUserOnlineStatusElem, 0, len(sub.SubscribeUserID))
 		for _, userID := range sub.SubscribeUserID {
-			platformIDs, err := ws.localOnlineCache.GetUserOnlinePlatform(ctx, userID)
+			platformIDs, err := ws.localOnlineCache.GetUserOnlinePlatform(client.UserCtx.Ctx, userID)
 			if err != nil {
-				glog.Slog.ErrorKVs(ctx, "SubUserOnlineStatus GetUserOnlinePlatform failed", "err", err, "userID", userID)
+				glog.Slog.ErrorKVs(client.UserCtx.Ctx, "SubUserOnlineStatus GetUserOnlinePlatform failed", "err", err, "userID", userID)
 				return nil, gerr.UnKnowError
 			}
 			// 添加用户的在线状态信息到响应中。
@@ -111,7 +105,7 @@ func (s *Subscription) DelClient(client *Client) {
 	if len(userIDs) == 0 {
 		return
 	}
-	addr := client.userCtx.GetRemoteAddr()
+	addr := client.UserCtx.GetRemoteAddr()
 	// 锁定 Subscription 以安全地移除订阅。
 	s.lock.Lock()
 	defer s.lock.Unlock()
@@ -173,7 +167,7 @@ func (s *Subscription) Sub(client *Client, addUserIDs, delUserIDs []string) {
 	if len(del)+len(add) == 0 {
 		return
 	}
-	addr := client.userCtx.GetRemoteAddr()
+	addr := client.UserCtx.GetRemoteAddr()
 	// 锁定 Subscription 更新订阅映射。
 	s.lock.Lock()
 	defer s.lock.Unlock()

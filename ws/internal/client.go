@@ -5,9 +5,9 @@ import (
 	"framework-gin/ws/constant"
 	"framework-gin/ws/proto/pb"
 	"github.com/golang/protobuf/proto"
-	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/glog"
+	"github.com/qiafan666/gotato/commons/gtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -41,38 +41,34 @@ type PingPongHandler func(string) error
 type Client struct {
 	w              *sync.Mutex
 	conn           LongConn
-	PlatformID     int  `json:"platform_id"`
-	IsCompress     bool `json:"is_compress"`
 	parseToken     *pb.ParseToken
-	userCtx        *UserConnContext
-	longConnServer LongConnServer
+	UserCtx        *UserConnContext
+	LongConnServer LongConnServer
 	closed         atomic.Bool
 	closedErr      error
 	hbCtx          context.Context
 	hbCancel       context.CancelFunc
 	subLock        *sync.Mutex
 	subUserIDs     map[string]struct{} // 订阅用户ID集合
-	logicHandler   *MsgHandle
+	MsgHandle      *MsgHandle
 }
 
 // ResetClient updates the client's state with new connection and context information.
 func (c *Client) ResetClient(ctx *UserConnContext, conn LongConn, longConnServer LongConnServer) {
 	c.w = new(sync.Mutex)
 	c.conn = conn
-	c.PlatformID = gcast.ToInt(ctx.GetPlatformID())
-	c.IsCompress = ctx.GetCompression()
 	c.parseToken = &pb.ParseToken{}
-	c.userCtx = ctx
-	c.longConnServer = longConnServer
+	c.UserCtx = ctx
+	c.LongConnServer = longConnServer
 	c.closed.Store(false)
 	c.closedErr = nil
-	c.hbCtx, c.hbCancel = context.WithCancel(c.userCtx)
+	c.hbCtx, c.hbCancel = context.WithCancel(c.UserCtx)
 	c.subLock = new(sync.Mutex)
 	if c.subUserIDs != nil {
 		clear(c.subUserIDs)
 	}
 	c.subUserIDs = make(map[string]struct{})
-	c.logicHandler = GetMsgHandler()
+	c.MsgHandle = GetMsgHandler()
 }
 
 func (c *Client) pingHandler(appData string) error {
@@ -80,7 +76,7 @@ func (c *Client) pingHandler(appData string) error {
 		return err
 	}
 
-	glog.Slog.DebugKVs(c.userCtx.Ctx, "pingHandler", "appData", appData)
+	glog.Slog.DebugKVs(c.UserCtx.Ctx, "pingHandler", "appData", appData)
 	return c.writePongMsg(appData)
 }
 
@@ -96,7 +92,7 @@ func (c *Client) readMessage() {
 	defer func() {
 		if r := recover(); r != nil {
 			c.closedErr = ErrPanic
-			glog.Slog.PanicKVs(c.userCtx.Ctx, "readMessage", "err", r)
+			glog.Slog.PanicKVs(c.UserCtx.Ctx, "readMessage", "err", r)
 		}
 		c.close()
 	}()
@@ -110,12 +106,12 @@ func (c *Client) readMessage() {
 	for {
 		messageType, message, returnErr := c.conn.ReadMessage()
 		if returnErr != nil {
-			glog.Slog.WarnKVs(c.userCtx.Ctx, "readMessage", "err", returnErr, "messageType", messageType)
+			glog.Slog.WarnKVs(c.UserCtx.Ctx, "readMessage", "err", returnErr, "messageType", messageType)
 			c.closedErr = returnErr
 			return
 		}
 
-		glog.Slog.DebugKVs(c.userCtx.Ctx, "readMessage", "messageType", messageType)
+		glog.Slog.DebugKVs(c.UserCtx.Ctx, "readMessage", "messageType", messageType)
 		if c.closed.Load() {
 			// 连接刚刚关闭，但协程尚未退出的情况
 			c.closedErr = ErrConnClosed
@@ -135,7 +131,7 @@ func (c *Client) readMessage() {
 			return
 		case PingMessage:
 			err := c.writePongMsg("")
-			glog.Slog.ErrorKVs(c.userCtx.Ctx, "readMessage", "writePongMsg err", err)
+			glog.Slog.ErrorKVs(c.UserCtx.Ctx, "readMessage", "writePongMsg err", err)
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
@@ -147,49 +143,37 @@ func (c *Client) readMessage() {
 // handleMessage 处理消息
 func (c *Client) handleMessage(message []byte) error {
 
-	if c.IsCompress {
+	if c.UserCtx.IsCompress {
 		var err error
-		message, err = c.longConnServer.DecompressWithPool(message)
+		message, err = c.LongConnServer.DecompressWithPool(message)
 		if err != nil {
 			return gerr.Wrap(err)
 		}
 	}
 
-	var binaryReq = getReq()
-	defer freeReq(binaryReq)
+	var binaryReq = GetReq()
+	defer FreeReq(binaryReq)
 
-	err := c.longConnServer.Decode(message, binaryReq)
+	err := c.LongConnServer.Decode(message, binaryReq)
 	if err != nil {
-		glog.Slog.ErrorKVs(c.userCtx.Ctx, "handleMessage", "decode error", err)
+		glog.Slog.ErrorKVs(c.UserCtx.Ctx, "handleMessage", "decode error", err)
 		return err
 	}
-	if err = c.longConnServer.Validate(binaryReq); err != nil {
-		glog.Slog.ErrorKVs(c.userCtx.Ctx, "handleMessage", "validate error", err)
+	if err = c.LongConnServer.Validate(binaryReq); err != nil {
+		glog.Slog.ErrorKVs(c.UserCtx.Ctx, "handleMessage", "validate error", err)
 		return err
 	}
 
-	c.userCtx.Ctx = WithMustInfoCtx(
-		[]any{constant.PlatformIDToName(c.PlatformID), c.userCtx.GetConnID(), c.parseToken.UserId, binaryReq.RequestID, c.userCtx.RemoteAddr},
+	c.UserCtx.Ctx = WithMustInfoCtx(
+		[]any{constant.PlatformIDToName(c.UserCtx.PlatformID), c.UserCtx.GetConnID(), c.parseToken.UserId, binaryReq.RequestID, c.UserCtx.RemoteAddr},
 	)
 
-	glog.Slog.DebugKVs(c.userCtx.Ctx, "handleMessage", "req", binaryReq.String())
+	glog.Slog.DebugKVs(c.UserCtx.Ctx, "handleMessage", "req", binaryReq.String())
+	startTime := gtime.NowUTC()
+	data, code := c.MsgHandle.DoMsgHandler(c, binaryReq)
+	glog.Slog.DebugKVs(c.UserCtx.Ctx, "handleMessage DoMsgHandler", "data", data, "code", code, "time", gtime.Since(startTime))
 
-	var data proto.Message
-	var code int
-	if binaryReq.GrpID == uint8(pb.Grp_Sys) {
-		switch binaryReq.CmdID {
-		case uint8(pb.CmdSys_Subscribe_Online_User):
-			data, code = c.longConnServer.SubUserOnlineStatus(c.userCtx.Ctx, c, binaryReq)
-		default:
-			return gerr.New("not support groupID and cmdID", "groupID", binaryReq.GrpID, "cmdID", binaryReq.CmdID)
-		}
-	} else {
-		data, code = c.logicHandler.DoMsgHandler(c.userCtx.Ctx, binaryReq)
-		glog.Slog.DebugKVs(c.userCtx.Ctx, "handleMessage DoMsgHandler", "err",
-			gerr.GetCodeAndMsg(code, c.userCtx.Language))
-	}
-
-	return c.replyMessage(c.userCtx.Ctx, binaryReq, data, code)
+	return c.replyMessage(c.UserCtx.Ctx, binaryReq, data, code)
 }
 
 func (c *Client) close() {
@@ -201,12 +185,10 @@ func (c *Client) close() {
 	c.closed.Store(true)
 	c.conn.Close()
 	c.hbCancel()
-	c.longConnServer.UnRegister(c)
+	c.LongConnServer.UnRegister(c)
 }
 
 func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Message, code int) error {
-	glog.Slog.DebugKVs(ctx, "replyMessage", "data", data, "code", code)
-
 	mReply := Resp{
 		GrpID:     binaryReq.GrpID,
 		CmdID:     binaryReq.CmdID,
@@ -223,7 +205,7 @@ func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Me
 		}
 	} else {
 		mReply.Code = code
-		mReply.Msg = gerr.GetCodeAndMsg(code, c.userCtx.Language)
+		mReply.Msg = gerr.GetCodeAndMsg(code, c.UserCtx.Language)
 	}
 	glog.Slog.DebugKVs(ctx, "replyMessage", "resp", mReply.String())
 
@@ -234,42 +216,12 @@ func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Me
 	return nil
 }
 
-func (c *Client) PushMessage(ctx context.Context, data []byte) error {
-	resp := Resp{
-		//ReqIdentifier: WSPushMsg,
-		//TODO 推送消息格式
-		Data: data,
-	}
-	return c.writeBinaryMsg(resp)
-}
-
-// KickOnlineMessage 踢下线 分布式使用
-func (c *Client) KickOnlineMessage() error {
-	resp := Resp{
-		GrpID: uint8(pb.Grp_Sys),
-		CmdID: uint8(pb.CmdSys_Kick_Online_User),
-	}
-	glog.Slog.DebugKVs(c.userCtx.Ctx, "KickOnlineMessage", "resp", resp.String())
-	err := c.writeBinaryMsg(resp)
-	c.close()
-	return err
-}
-
-func (c *Client) PushUserOnlineStatus(data []byte) error {
-	resp := Resp{
-		GrpID: uint8(pb.Grp_Sys),
-		CmdID: uint8(pb.CmdSys_Subscribe_Online_User),
-		Data:  data,
-	}
-	return c.writeBinaryMsg(resp)
-}
-
 func (c *Client) writeBinaryMsg(resp Resp) error {
 	if c.closed.Load() {
 		return nil
 	}
 
-	encodedBuf, err := c.longConnServer.Encode(resp)
+	encodedBuf, err := c.LongConnServer.Encode(resp)
 	if err != nil {
 		return err
 	}
@@ -282,8 +234,8 @@ func (c *Client) writeBinaryMsg(resp Resp) error {
 		return err
 	}
 
-	if c.IsCompress {
-		resultBuf, compressErr := c.longConnServer.CompressWithPool(encodedBuf)
+	if c.UserCtx.IsCompress {
+		resultBuf, compressErr := c.LongConnServer.CompressWithPool(encodedBuf)
 		if compressErr != nil {
 			return compressErr
 		}
@@ -295,9 +247,9 @@ func (c *Client) writeBinaryMsg(resp Resp) error {
 
 // 在Web平台上主动发起心跳
 func (c *Client) activeHeartbeat() {
-	if c.PlatformID == constant.WebPlatformID {
+	if c.UserCtx.PlatformID == constant.WebPlatformID {
 		go func() {
-			glog.Slog.DebugKVs(c.userCtx.Ctx, "activeHeartbeat start.")
+			glog.Slog.DebugKVs(c.UserCtx.Ctx, "activeHeartbeat start.")
 			ticker := time.NewTicker(pingPeriod)
 			defer ticker.Stop()
 
@@ -305,7 +257,7 @@ func (c *Client) activeHeartbeat() {
 				select {
 				case <-ticker.C:
 					if err := c.writePingMsg(); err != nil {
-						glog.Slog.WarnKVs(c.userCtx.Ctx, "activeHeartbeat", "err", err)
+						glog.Slog.WarnKVs(c.UserCtx.Ctx, "activeHeartbeat", "err", err)
 						return
 					}
 				case <-c.hbCtx.Done():
@@ -315,6 +267,7 @@ func (c *Client) activeHeartbeat() {
 		}()
 	}
 }
+
 func (c *Client) writePingMsg() error {
 	if c.closed.Load() {
 		return nil
@@ -334,7 +287,7 @@ func (c *Client) writePingMsg() error {
 func (c *Client) writePongMsg(appData string) error {
 	//glog.Slog.DebugKVs(c.userCtx.Ctx, "writePongMsg", "appData", appData)
 	if c.closed.Load() {
-		glog.Slog.WarnKVs(c.userCtx.Ctx, "writePongMsg", "appdata", appData, "closed err", c.closedErr)
+		glog.Slog.WarnKVs(c.UserCtx.Ctx, "writePongMsg", "appdata", appData, "closed err", c.closedErr)
 		return nil
 	}
 
@@ -343,13 +296,54 @@ func (c *Client) writePongMsg(appData string) error {
 
 	err := c.conn.SetWriteDeadline(writeWait)
 	if err != nil {
-		glog.Slog.WarnKVs(c.userCtx.Ctx, "writePongMsg", "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", writeWait, "appData", appData)
+		glog.Slog.WarnKVs(c.UserCtx.Ctx, "writePongMsg", "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", writeWait, "appData", appData)
 		return gerr.Wrap(err)
 	}
 	err = c.conn.WriteMessage(PongMessage, []byte(appData))
 	if err != nil {
-		glog.Slog.WarnKVs(c.userCtx.Ctx, "writePongMsg", "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
+		glog.Slog.WarnKVs(c.UserCtx.Ctx, "writePongMsg", "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
 	}
 
 	return gerr.Wrap(err)
+}
+
+// ------------------------ inner function ------------------------
+
+// PubMessage 推送消息,消息进入redis pub/sub,由redis订阅者进行处理
+func (c *Client) PubMessage(ctx context.Context, pubsub *pb.ReqPushMsgToOther) error {
+	return c.LongConnServer.PubMsgChannel(ctx, pubsub)
+}
+
+// PushMessage 服务器主动向客户端推送消息
+func (c *Client) PushMessage(data []byte) error {
+	resp := Resp{
+		GrpID: uint8(pb.Grp_Sys),
+		CmdID: uint8(pb.Cmd_Sys_Push_Message),
+		Data:  data,
+	}
+	glog.Slog.DebugKVs(c.UserCtx.Ctx, "PushMessage", "resp", resp.String())
+	err := c.writeBinaryMsg(resp)
+	c.close()
+	return err
+}
+
+// KickOnlineMessage 踢下线 分布式使用
+func (c *Client) KickOnlineMessage() error {
+	resp := Resp{
+		GrpID: uint8(pb.Grp_Sys),
+		CmdID: uint8(pb.Cmd_Sys_Kick_Online_User),
+	}
+	glog.Slog.DebugKVs(c.UserCtx.Ctx, "KickOnlineMessage", "resp", resp.String())
+	err := c.writeBinaryMsg(resp)
+	c.close()
+	return err
+}
+
+func (c *Client) PushUserOnlineStatus(data []byte) error {
+	resp := Resp{
+		GrpID: uint8(pb.Grp_Sys),
+		CmdID: uint8(pb.Cmd_Sys_Subscribe_Online_User),
+		Data:  data,
+	}
+	return c.writeBinaryMsg(resp)
 }

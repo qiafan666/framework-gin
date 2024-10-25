@@ -9,7 +9,7 @@ enum Grp {
   Logic = 2;
 }
 
-enum Cmd_sys {
+enum Cmd_Sys {
   Def_Cmd_Sys = 0;
   Subscribe_Online_User = 1;
   Kick_Online_User = 2;

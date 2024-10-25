@@ -1,12 +1,11 @@
 package controllers
 
 import (
-	"context"
-	"framework-gin/common/errs"
 	"framework-gin/ws/internal"
 	"framework-gin/ws/proto/pb"
 	"framework-gin/ws/services"
 	"github.com/golang/protobuf/proto"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/glog"
 )
 
@@ -31,14 +30,13 @@ func InitLogicController() {
 }
 
 // Health 健康检查
-func Health(ctx context.Context, req proto.Message) (proto.Message, int) {
+func Health(client *internal.Client, req proto.Message) (proto.Message, int) {
 
 	// 将 proto.Message 转换为 *pb.ReqHealth
-	v, ok := req.(*pb.ReqHealth)
+	pbReq, ok := req.(*pb.ReqHealth)
 	if !ok {
-		return nil, errs.InvalidRequestError
+		glog.Slog.ErrorKVs(client.UserCtx.Ctx, "req type error", "req", req)
+		return nil, gerr.ParameterError
 	}
-	glog.Slog.DebugKVs(ctx, "HealthHandler", "req", v)
-
-	return logicController.logicService.Health(ctx, v)
+	return logicController.logicService.Health(client, pbReq)
 }

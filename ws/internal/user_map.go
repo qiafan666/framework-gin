@@ -7,6 +7,7 @@ import (
 )
 
 type UserMap interface {
+	AllCons() []*Client
 	GetAll(userID string) ([]*Client, bool)
 	Get(userID string, platformID int) ([]*Client, bool, bool)
 	Set(userID string, v *Client)
@@ -33,7 +34,7 @@ func (u *UserPlatform) PlatformIDs() []int32 {
 	}
 	platformIDs := make([]int32, 0, len(u.Clients))
 	for _, client := range u.Clients {
-		platformIDs = append(platformIDs, int32(client.PlatformID))
+		platformIDs = append(platformIDs, int32(client.UserCtx.PlatformID))
 	}
 	return platformIDs
 }
@@ -44,7 +45,7 @@ func (u *UserPlatform) PlatformIDSet() map[int32]struct{} {
 	}
 	platformIDs := make(map[int32]struct{})
 	for _, client := range u.Clients {
-		platformIDs[int32(client.PlatformID)] = struct{}{}
+		platformIDs[int32(client.UserCtx.PlatformID)] = struct{}{}
 	}
 	return platformIDs
 }
@@ -90,6 +91,18 @@ func (u *userMap) push(userID string, userPlatform *UserPlatform, offline []int3
 	}
 }
 
+func (u *userMap) AllCons() []*Client {
+	u.lock.RLock()
+	defer u.lock.RUnlock()
+	result := make([]*Client, 0, 1000)
+	for _, userPlatform := range u.data {
+		for _, client := range userPlatform.Clients {
+			result = append(result, client)
+		}
+	}
+	return result
+}
+
 func (u *userMap) GetAll(userID string) ([]*Client, bool) {
 	u.lock.RLock()
 	defer u.lock.RUnlock()
@@ -109,7 +122,7 @@ func (u *userMap) Get(userID string, platformID int) ([]*Client, bool, bool) {
 	}
 	var clients []*Client
 	for _, client := range result.Clients {
-		if client.PlatformID == platformID {
+		if client.UserCtx.PlatformID == platformID {
 			clients = append(clients, client)
 		}
 	}
@@ -143,13 +156,13 @@ func (u *userMap) DeleteClients(userID string, clients []*Client) (isDeleteUser 
 	}
 	offline := make([]int32, 0, len(clients))
 	deleteAddr := gcommon.SliceSetAny(clients, func(client *Client) string {
-		return client.userCtx.GetRemoteAddr()
+		return client.UserCtx.GetRemoteAddr()
 	})
 	tmp := result.Clients
 	result.Clients = result.Clients[:0]
 	for _, client := range tmp {
-		if _, delCli := deleteAddr[client.userCtx.GetRemoteAddr()]; delCli {
-			offline = append(offline, int32(client.PlatformID))
+		if _, delCli := deleteAddr[client.UserCtx.GetRemoteAddr()]; delCli {
+			offline = append(offline, int32(client.UserCtx.PlatformID))
 		} else {
 			result.Clients = append(result.Clients, client)
 		}
@@ -173,7 +186,7 @@ func (u *userMap) GetAllUserStatus(deadline time.Time, nowtime time.Time) (resul
 		userPlatform.Time = nowtime
 		online := make([]int32, 0, len(userPlatform.Clients))
 		for _, client := range userPlatform.Clients {
-			online = append(online, int32(client.PlatformID))
+			online = append(online, int32(client.UserCtx.PlatformID))
 		}
 		result = append(result, UserState{UserID: userID, Online: online})
 	}

@@ -9,6 +9,7 @@ import (
 // Register Start run ws server.
 func Register(r *gin.Engine) {
 	// 注册路由
+	controllers.InitSysController()
 	controllers.InitLogicController()
 
 	longServer := internal.NewWsServer()

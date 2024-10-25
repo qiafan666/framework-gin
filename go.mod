@@ -11,6 +11,7 @@ require (
 	github.com/qiafan666/gotato v1.1.28
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/swaggo/swag v1.16.3
+	github.com/vmihailenco/msgpack/v5 v5.4.1
 	google.golang.org/protobuf v1.33.0
 	gorm.io/gorm v1.25.8
 )
@@ -66,6 +67,7 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.49.0 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.25.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
