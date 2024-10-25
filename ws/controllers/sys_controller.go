@@ -26,8 +26,8 @@ func InitSysController() {
 	sysController = NewSysController()
 
 	handler := internal.GetMsgHandler()
-	handler.AddHandler(uint8(pb.Grp_Sys), uint8(pb.Cmd_Sys_Subscribe_Online_User), &pb.ReqSubUserOnlineStatus{}, &pb.RspSubUserOnlineStatus{}, SubUserOnlineStatus)
-	handler.AddHandler(uint8(pb.Grp_Sys), uint8(pb.Cmd_Sys_Push_Message), &pb.ReqPushMsgToOther{}, &pb.RspPushMsgToOther{}, PushMsgToOther)
+	handler.AddHandler(uint8(pb.Grp_Sys), uint8(pb.CmdSys_SubscribeOnlineUser), &pb.ReqSubUserOnlineStatus{}, &pb.RspSubUserOnlineStatus{}, SubUserOnlineStatus)
+	handler.AddHandler(uint8(pb.Grp_Sys), uint8(pb.CmdSys_PushMessage), &pb.ReqPushMsgToOther{}, &pb.RspPushMsgToOther{}, PushMsgToOther)
 }
 
 // SubUserOnlineStatus 订阅在线用户状态

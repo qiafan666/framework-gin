@@ -9,14 +9,20 @@ enum Grp {
   Logic = 2;
 }
 
-enum Cmd_Sys {
-  Def_Cmd_Sys = 0;
-  Subscribe_Online_User = 1;
-  Kick_Online_User = 2;
-  Push_Message = 3;
+enum CmdSys {
+  DefCmdSys = 0;
+  SubscribeOnlineUser = 1;
+  KickOnlineUser = 2;
+  PushMessage = 3;
 }
 
-enum Cmd_Logic {
-  Def_Cmd_Logic = 0;
+enum CmdLogic {
+  DefCmdLogic = 0;
   Health = 1;
+}
+
+enum KickReason {
+  DefKickReason = 0;
+  // 只能一个端登录
+  OnlyOneClient = 1;
 }

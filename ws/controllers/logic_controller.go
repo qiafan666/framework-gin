@@ -26,7 +26,7 @@ func InitLogicController() {
 	logicController = NewLogicController()
 
 	handler := internal.GetMsgHandler()
-	handler.AddHandler(uint8(pb.Grp_Logic), uint8(pb.Cmd_Logic_Health), &pb.ReqHealth{}, &pb.RspHealth{}, Health)
+	handler.AddHandler(uint8(pb.Grp_Logic), uint8(pb.CmdLogic_Health), &pb.ReqHealth{}, &pb.RspHealth{}, Health)
 }
 
 // Health 健康检查

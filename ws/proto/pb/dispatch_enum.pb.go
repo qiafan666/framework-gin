@@ -69,102 +69,149 @@ func (Grp) EnumDescriptor() ([]byte, []int) {
 	return file_dispatch_enum_proto_rawDescGZIP(), []int{0}
 }
 
-type Cmd_Sys int32
+type CmdSys int32
 
 const (
-	Cmd_Sys_Def_Cmd_Sys           Cmd_Sys = 0
-	Cmd_Sys_Subscribe_Online_User Cmd_Sys = 1
-	Cmd_Sys_Kick_Online_User      Cmd_Sys = 2
-	Cmd_Sys_Push_Message          Cmd_Sys = 3
+	CmdSys_DefCmdSys           CmdSys = 0
+	CmdSys_SubscribeOnlineUser CmdSys = 1
+	CmdSys_KickOnlineUser      CmdSys = 2
+	CmdSys_PushMessage         CmdSys = 3
 )
 
-// Enum value maps for Cmd_Sys.
+// Enum value maps for CmdSys.
 var (
-	Cmd_Sys_name = map[int32]string{
-		0: "Def_Cmd_Sys",
-		1: "Subscribe_Online_User",
-		2: "Kick_Online_User",
-		3: "Push_Message",
+	CmdSys_name = map[int32]string{
+		0: "DefCmdSys",
+		1: "SubscribeOnlineUser",
+		2: "KickOnlineUser",
+		3: "PushMessage",
 	}
-	Cmd_Sys_value = map[string]int32{
-		"Def_Cmd_Sys":           0,
-		"Subscribe_Online_User": 1,
-		"Kick_Online_User":      2,
-		"Push_Message":          3,
+	CmdSys_value = map[string]int32{
+		"DefCmdSys":           0,
+		"SubscribeOnlineUser": 1,
+		"KickOnlineUser":      2,
+		"PushMessage":         3,
 	}
 )
 
-func (x Cmd_Sys) Enum() *Cmd_Sys {
-	p := new(Cmd_Sys)
+func (x CmdSys) Enum() *CmdSys {
+	p := new(CmdSys)
 	*p = x
 	return p
 }
 
-func (x Cmd_Sys) String() string {
+func (x CmdSys) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Cmd_Sys) Descriptor() protoreflect.EnumDescriptor {
+func (CmdSys) Descriptor() protoreflect.EnumDescriptor {
 	return file_dispatch_enum_proto_enumTypes[1].Descriptor()
 }
 
-func (Cmd_Sys) Type() protoreflect.EnumType {
+func (CmdSys) Type() protoreflect.EnumType {
 	return &file_dispatch_enum_proto_enumTypes[1]
 }
 
-func (x Cmd_Sys) Number() protoreflect.EnumNumber {
+func (x CmdSys) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Cmd_Sys.Descriptor instead.
-func (Cmd_Sys) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use CmdSys.Descriptor instead.
+func (CmdSys) EnumDescriptor() ([]byte, []int) {
 	return file_dispatch_enum_proto_rawDescGZIP(), []int{1}
 }
 
-type Cmd_Logic int32
+type CmdLogic int32
 
 const (
-	Cmd_Logic_Def_Cmd_Logic Cmd_Logic = 0
-	Cmd_Logic_Health        Cmd_Logic = 1
+	CmdLogic_DefCmdLogic CmdLogic = 0
+	CmdLogic_Health      CmdLogic = 1
 )
 
-// Enum value maps for Cmd_Logic.
+// Enum value maps for CmdLogic.
 var (
-	Cmd_Logic_name = map[int32]string{
-		0: "Def_Cmd_Logic",
+	CmdLogic_name = map[int32]string{
+		0: "DefCmdLogic",
 		1: "Health",
 	}
-	Cmd_Logic_value = map[string]int32{
-		"Def_Cmd_Logic": 0,
-		"Health":        1,
+	CmdLogic_value = map[string]int32{
+		"DefCmdLogic": 0,
+		"Health":      1,
 	}
 )
 
-func (x Cmd_Logic) Enum() *Cmd_Logic {
-	p := new(Cmd_Logic)
+func (x CmdLogic) Enum() *CmdLogic {
+	p := new(CmdLogic)
 	*p = x
 	return p
 }
 
-func (x Cmd_Logic) String() string {
+func (x CmdLogic) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Cmd_Logic) Descriptor() protoreflect.EnumDescriptor {
+func (CmdLogic) Descriptor() protoreflect.EnumDescriptor {
 	return file_dispatch_enum_proto_enumTypes[2].Descriptor()
 }
 
-func (Cmd_Logic) Type() protoreflect.EnumType {
+func (CmdLogic) Type() protoreflect.EnumType {
 	return &file_dispatch_enum_proto_enumTypes[2]
 }
 
-func (x Cmd_Logic) Number() protoreflect.EnumNumber {
+func (x CmdLogic) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Cmd_Logic.Descriptor instead.
-func (Cmd_Logic) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use CmdLogic.Descriptor instead.
+func (CmdLogic) EnumDescriptor() ([]byte, []int) {
 	return file_dispatch_enum_proto_rawDescGZIP(), []int{2}
+}
+
+type KickReason int32
+
+const (
+	KickReason_DefKickReason KickReason = 0
+	// 只能一个端登录
+	KickReason_OnlyOneClient KickReason = 1
+)
+
+// Enum value maps for KickReason.
+var (
+	KickReason_name = map[int32]string{
+		0: "DefKickReason",
+		1: "OnlyOneClient",
+	}
+	KickReason_value = map[string]int32{
+		"DefKickReason": 0,
+		"OnlyOneClient": 1,
+	}
+)
+
+func (x KickReason) Enum() *KickReason {
+	p := new(KickReason)
+	*p = x
+	return p
+}
+
+func (x KickReason) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (KickReason) Descriptor() protoreflect.EnumDescriptor {
+	return file_dispatch_enum_proto_enumTypes[3].Descriptor()
+}
+
+func (KickReason) Type() protoreflect.EnumType {
+	return &file_dispatch_enum_proto_enumTypes[3]
+}
+
+func (x KickReason) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use KickReason.Descriptor instead.
+func (KickReason) EnumDescriptor() ([]byte, []int) {
+	return file_dispatch_enum_proto_rawDescGZIP(), []int{3}
 }
 
 var File_dispatch_enum_proto protoreflect.FileDescriptor
@@ -173,17 +220,20 @@ var file_dispatch_enum_proto_rawDesc = []byte{
 	0x0a, 0x13, 0x64, 0x69, 0x73, 0x70, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x65, 0x6e, 0x75, 0x6d, 0x2e,
 	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x02, 0x70, 0x62, 0x2a, 0x22, 0x0a, 0x03, 0x47, 0x72, 0x70,
 	0x12, 0x07, 0x0a, 0x03, 0x44, 0x65, 0x66, 0x10, 0x00, 0x12, 0x07, 0x0a, 0x03, 0x53, 0x79, 0x73,
-	0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x4c, 0x6f, 0x67, 0x69, 0x63, 0x10, 0x02, 0x2a, 0x5d, 0x0a,
-	0x07, 0x43, 0x6d, 0x64, 0x5f, 0x53, 0x79, 0x73, 0x12, 0x0f, 0x0a, 0x0b, 0x44, 0x65, 0x66, 0x5f,
-	0x43, 0x6d, 0x64, 0x5f, 0x53, 0x79, 0x73, 0x10, 0x00, 0x12, 0x19, 0x0a, 0x15, 0x53, 0x75, 0x62,
-	0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x5f, 0x4f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x5f, 0x55, 0x73,
-	0x65, 0x72, 0x10, 0x01, 0x12, 0x14, 0x0a, 0x10, 0x4b, 0x69, 0x63, 0x6b, 0x5f, 0x4f, 0x6e, 0x6c,
-	0x69, 0x6e, 0x65, 0x5f, 0x55, 0x73, 0x65, 0x72, 0x10, 0x02, 0x12, 0x10, 0x0a, 0x0c, 0x50, 0x75,
-	0x73, 0x68, 0x5f, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x10, 0x03, 0x2a, 0x2a, 0x0a, 0x09,
-	0x43, 0x6d, 0x64, 0x5f, 0x4c, 0x6f, 0x67, 0x69, 0x63, 0x12, 0x11, 0x0a, 0x0d, 0x44, 0x65, 0x66,
-	0x5f, 0x43, 0x6d, 0x64, 0x5f, 0x4c, 0x6f, 0x67, 0x69, 0x63, 0x10, 0x00, 0x12, 0x0a, 0x0a, 0x06,
-	0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x10, 0x01, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x2f, 0x70, 0x62,
-	0x3b, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x10, 0x01, 0x12, 0x09, 0x0a, 0x05, 0x4c, 0x6f, 0x67, 0x69, 0x63, 0x10, 0x02, 0x2a, 0x55, 0x0a,
+	0x06, 0x43, 0x6d, 0x64, 0x53, 0x79, 0x73, 0x12, 0x0d, 0x0a, 0x09, 0x44, 0x65, 0x66, 0x43, 0x6d,
+	0x64, 0x53, 0x79, 0x73, 0x10, 0x00, 0x12, 0x17, 0x0a, 0x13, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72,
+	0x69, 0x62, 0x65, 0x4f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x55, 0x73, 0x65, 0x72, 0x10, 0x01, 0x12,
+	0x12, 0x0a, 0x0e, 0x4b, 0x69, 0x63, 0x6b, 0x4f, 0x6e, 0x6c, 0x69, 0x6e, 0x65, 0x55, 0x73, 0x65,
+	0x72, 0x10, 0x02, 0x12, 0x0f, 0x0a, 0x0b, 0x50, 0x75, 0x73, 0x68, 0x4d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x10, 0x03, 0x2a, 0x27, 0x0a, 0x08, 0x43, 0x6d, 0x64, 0x4c, 0x6f, 0x67, 0x69, 0x63,
+	0x12, 0x0f, 0x0a, 0x0b, 0x44, 0x65, 0x66, 0x43, 0x6d, 0x64, 0x4c, 0x6f, 0x67, 0x69, 0x63, 0x10,
+	0x00, 0x12, 0x0a, 0x0a, 0x06, 0x48, 0x65, 0x61, 0x6c, 0x74, 0x68, 0x10, 0x01, 0x2a, 0x32, 0x0a,
+	0x0a, 0x4b, 0x69, 0x63, 0x6b, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x12, 0x11, 0x0a, 0x0d, 0x44,
+	0x65, 0x66, 0x4b, 0x69, 0x63, 0x6b, 0x52, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x10, 0x00, 0x12, 0x11,
+	0x0a, 0x0d, 0x4f, 0x6e, 0x6c, 0x79, 0x4f, 0x6e, 0x65, 0x43, 0x6c, 0x69, 0x65, 0x6e, 0x74, 0x10,
+	0x01, 0x42, 0x09, 0x5a, 0x07, 0x2e, 0x2f, 0x70, 0x62, 0x3b, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -198,11 +248,12 @@ func file_dispatch_enum_proto_rawDescGZIP() []byte {
 	return file_dispatch_enum_proto_rawDescData
 }
 
-var file_dispatch_enum_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_dispatch_enum_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
 var file_dispatch_enum_proto_goTypes = []interface{}{
-	(Grp)(0),       // 0: pb.Grp
-	(Cmd_Sys)(0),   // 1: pb.Cmd_Sys
-	(Cmd_Logic)(0), // 2: pb.Cmd_Logic
+	(Grp)(0),        // 0: pb.Grp
+	(CmdSys)(0),     // 1: pb.CmdSys
+	(CmdLogic)(0),   // 2: pb.CmdLogic
+	(KickReason)(0), // 3: pb.KickReason
 }
 var file_dispatch_enum_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -222,7 +273,7 @@ func file_dispatch_enum_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_dispatch_enum_proto_rawDesc,
-			NumEnums:      3,
+			NumEnums:      4,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

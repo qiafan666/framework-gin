@@ -40,7 +40,6 @@ type LongConnServer interface {
 	GetUserAllCons(userID string) ([]*Client, bool)
 	GetUserPlatformCons(userID string, platform int) ([]*Client, bool, bool)
 	Validate(s any) error
-	KickUserConn(client *Client) error
 	UnRegister(c *Client)
 	SetKickHandlerInfo(i *kickHandler)
 	SubUserOnlineStatus(client *Client, data *pb.ReqSubUserOnlineStatus) (*pb.RspSubUserOnlineStatus, int)
@@ -208,12 +207,6 @@ func (ws *WsServer) Validate(s any) error {
 	return gcommon.Validate(s)
 }
 
-// KickUserConn 踢人 分布式环境下使用
-func (ws *WsServer) KickUserConn(client *Client) error {
-	ws.clients.DeleteClients(client.parseToken.UserId, []*Client{client})
-	return client.KickOnlineMessage()
-}
-
 func (ws *WsServer) UnRegister(c *Client) {
 	ws.unregisterChan <- c
 }
@@ -240,7 +233,7 @@ func (ws *WsServer) multiTerminalLoginChecker(clientOK bool, oldClients []*Clien
 		}
 		ws.clients.DeleteClients(newClient.parseToken.UserId, oldClients)
 		for _, c := range oldClients {
-			err := c.KickOnlineMessage()
+			err := c.KickOnlineMessage(pb.KickReason_OnlyOneClient)
 			if err != nil {
 				glog.Slog.WarnKVs(c.UserCtx.Ctx, "multiTerminalLoginChecker,KickOnlineMessage", "err", err)
 			}
@@ -340,7 +333,7 @@ func (ws *WsServer) subscribe() {
 					}
 					client.w.Lock()
 					glog.Slog.DebugKVs(client.UserCtx.Ctx, "subscribe message", "msg", msg.String())
-					err := client.PushMessage(msg.Data)
+					err := client.PushMessage(msg)
 					if err != nil {
 						glog.Slog.ErrorKVs(client.UserCtx.Ctx, "subscribe message,PushMessage error", "err", err)
 						continue
@@ -357,7 +350,7 @@ func (ws *WsServer) subscribe() {
 						oldClient.w.Lock()
 						for _, client := range oldClients {
 							glog.Slog.DebugKVs(client.UserCtx.Ctx, "subscribe message", "msg", msg.String())
-							err := client.PushMessage(msg.Data)
+							err := client.PushMessage(msg)
 							if err != nil {
 								glog.Slog.ErrorKVs(client.UserCtx.Ctx, "subscribe message,PushMessage error", "err", err)
 								continue

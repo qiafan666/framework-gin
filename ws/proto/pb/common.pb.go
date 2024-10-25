@@ -20,6 +20,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// 解析token
 type ParseToken struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -105,6 +106,7 @@ func (*InvalidateToken) Descriptor() ([]byte, []int) {
 	return file_common_proto_rawDescGZIP(), []int{1}
 }
 
+// 设置用户在线状态
 type SetUserOnlineStatusReq struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

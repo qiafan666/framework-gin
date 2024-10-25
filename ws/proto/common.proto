@@ -3,13 +3,14 @@ package pb;
 
 option go_package = "./pb;pb";
 
+// 解析token
 message ParseToken{
   string user_id = 1;
 }
-
 message InvalidateToken{
 }
 
+// 设置用户在线状态
 message SetUserOnlineStatusReq {
   repeated UserOnlineStatus status = 1;
 }
@@ -19,5 +20,3 @@ message UserOnlineStatus {
   repeated int32 online = 3;
   repeated int32 offline = 4;
 }
-
-

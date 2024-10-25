@@ -315,11 +315,11 @@ func (c *Client) PubMessage(ctx context.Context, pubsub *pb.ReqPushMsgToOther) e
 }
 
 // PushMessage 服务器主动向客户端推送消息
-func (c *Client) PushMessage(data []byte) error {
+func (c *Client) PushMessage(req *pb.ReqPushMsgToOther) error {
 	resp := Resp{
-		GrpID: uint8(pb.Grp_Sys),
-		CmdID: uint8(pb.Cmd_Sys_Push_Message),
-		Data:  data,
+		GrpID: uint8(req.GrpID),
+		CmdID: uint8(req.CmdID),
+		Data:  req.Data,
 	}
 	glog.Slog.DebugKVs(c.UserCtx.Ctx, "PushMessage", "resp", resp.String())
 	err := c.writeBinaryMsg(resp)
@@ -328,13 +328,23 @@ func (c *Client) PushMessage(data []byte) error {
 }
 
 // KickOnlineMessage 踢下线 分布式使用
-func (c *Client) KickOnlineMessage() error {
+func (c *Client) KickOnlineMessage(reason pb.KickReason) error {
+
+	pbRsp := &pb.RpcUserKickOff{
+		Reason: reason,
+	}
+	protoData, err := proto.Marshal(pbRsp)
+	if err != nil {
+		glog.Slog.ErrorKVs(c.UserCtx.Ctx, "KickOnlineMessage", "marshal data error", err)
+		return err
+	}
 	resp := Resp{
 		GrpID: uint8(pb.Grp_Sys),
-		CmdID: uint8(pb.Cmd_Sys_Kick_Online_User),
+		CmdID: uint8(pb.CmdSys_KickOnlineUser),
+		Data:  protoData,
 	}
 	glog.Slog.DebugKVs(c.UserCtx.Ctx, "KickOnlineMessage", "resp", resp.String())
-	err := c.writeBinaryMsg(resp)
+	err = c.writeBinaryMsg(resp)
 	c.close()
 	return err
 }
@@ -342,7 +352,7 @@ func (c *Client) KickOnlineMessage() error {
 func (c *Client) PushUserOnlineStatus(data []byte) error {
 	resp := Resp{
 		GrpID: uint8(pb.Grp_Sys),
-		CmdID: uint8(pb.Cmd_Sys_Subscribe_Online_User),
+		CmdID: uint8(pb.CmdSys_SubscribeOnlineUser),
 		Data:  data,
 	}
 	return c.writeBinaryMsg(resp)
