@@ -7,7 +7,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/glog"
-	"github.com/qiafan666/gotato/commons/gtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -165,13 +164,13 @@ func (c *Client) handleMessage(message []byte) error {
 	}
 
 	c.UserCtx.Ctx = WithMustInfoCtx(
-		[]any{constant.PlatformIDToName(c.UserCtx.PlatformID), c.UserCtx.GetConnID(), c.parseToken.UserId, binaryReq.RequestID, c.UserCtx.RemoteAddr},
+		[]any{constant.PlatformIDToName(c.UserCtx.PlatformID), c.UserCtx.GetConnID(), c.parseToken.UserId, binaryReq.RequestId, c.UserCtx.RemoteAddr},
 	)
 
 	glog.Slog.DebugKVs(c.UserCtx.Ctx, "handleMessage", "req", binaryReq.String())
-	startTime := gtime.NowUTC()
+	startTime := time.Now()
 	data, code := c.MsgHandle.DoMsgHandler(c, binaryReq)
-	glog.Slog.DebugKVs(c.UserCtx.Ctx, "handleMessage DoMsgHandler", "data", data, "code", code, "time", gtime.Since(startTime))
+	glog.Slog.DebugKVs(c.UserCtx.Ctx, "handleMessage DoMsgHandler", "data", data, "code", code, "time", time.Since(startTime))
 
 	return c.replyMessage(c.UserCtx.Ctx, binaryReq, data, code)
 }
@@ -190,9 +189,9 @@ func (c *Client) close() {
 
 func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Message, code int) error {
 	mReply := Resp{
-		GrpID:     binaryReq.GrpID,
-		CmdID:     binaryReq.CmdID,
-		RequestID: binaryReq.RequestID,
+		GrpID:     binaryReq.GrpId,
+		CmdID:     binaryReq.CmdId,
+		RequestID: binaryReq.RequestId,
 	}
 
 	if code == 0 {
@@ -317,8 +316,8 @@ func (c *Client) PubMessage(ctx context.Context, pubsub *pb.ReqPushMsgToOther) e
 // PushMessage 服务器主动向客户端推送消息
 func (c *Client) PushMessage(req *pb.ReqPushMsgToOther) error {
 	resp := Resp{
-		GrpID: uint8(req.GrpID),
-		CmdID: uint8(req.CmdID),
+		GrpID: uint8(req.GrpId),
+		CmdID: uint8(req.CmdId),
 		Data:  req.Data,
 	}
 	glog.Slog.DebugKVs(c.UserCtx.Ctx, "PushMessage", "resp", resp.String())

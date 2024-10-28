@@ -10,17 +10,17 @@ import (
 )
 
 type Req struct {
-	RequestID string `json:"request_id"   validate:"required"`
-	GrpID     uint8  `json:"grp_id" validate:"required"` // 消息组id
-	CmdID     uint8  `json:"cmd_id" validate:"required"` // 消息的ID
+	RequestId string `json:"request_id"   validate:"required"`
+	GrpId     uint8  `json:"grp_id" validate:"required"` // 消息组id
+	CmdId     uint8  `json:"cmd_id" validate:"required"` // 消息的ID
 	Data      []byte `json:"data"`
 }
 
 func (r *Req) String() string {
 	var tReq Req
-	tReq.RequestID = r.RequestID
-	tReq.GrpID = r.GrpID
-	tReq.CmdID = r.CmdID
+	tReq.RequestId = r.RequestId
+	tReq.GrpId = r.GrpId
+	tReq.CmdId = r.CmdId
 	tReq.Data = r.Data
 	return gcast.ToString(tReq)
 }
@@ -34,9 +34,9 @@ var reqPool = sync.Pool{
 func GetReq() *Req {
 	req := reqPool.Get().(*Req)
 	req.Data = nil
-	req.RequestID = ""
-	req.GrpID = 0
-	req.CmdID = 0
+	req.RequestId = ""
+	req.GrpId = 0
+	req.CmdId = 0
 	return req
 }
 
@@ -97,7 +97,7 @@ func GetMsgHandler() *MsgHandle {
 
 // DoMsgHandler 处理业务
 func (m *MsgHandle) DoMsgHandler(client *Client, req *Req) (proto.Message, int) {
-	msgID := genMsgID(req.GrpID, req.CmdID)
+	msgID := genMsgID(req.GrpId, req.CmdId)
 	h, ok := m.Apis[msgID]
 	if !ok {
 		glog.Slog.ErrorKVs(client.UserCtx.Ctx, "DoMsgHandler", "msgID not found,MsgID", msgID)

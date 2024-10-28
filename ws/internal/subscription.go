@@ -32,7 +32,7 @@ func (ws *WsServer) pushUserIDOnlineStatus(ctx context.Context, userID string, p
 	}
 	// 创建并序列化用户在线状态消息。
 	onlineStatus, err := proto.Marshal(&pb.RspSubUserOnlineStatus{
-		Subscribers: []*pb.SubUserOnlineStatusElem{{UserID: userID, OnlinePlatformIDs: platformIDs}},
+		Subscribers: []*pb.SubUserOnlineStatusElem{{UserID: userID, OnlinePlatformIds: platformIDs}},
 	})
 	if err != nil {
 		glog.Slog.ErrorKVs(ctx, "pushUserIDOnlineStatus json.Marshal", "err", err, "userID", userID, "platformIDs", platformIDs)
@@ -51,13 +51,13 @@ func (ws *WsServer) pushUserIDOnlineStatus(ctx context.Context, userID string, p
 // 它将请求的数据解析后更新订阅状态，并返回当前订阅的用户的在线状态。
 func (ws *WsServer) SubUserOnlineStatus(client *Client, sub *pb.ReqSubUserOnlineStatus) (*pb.RspSubUserOnlineStatus, int) {
 	// 更新订阅的用户和取消订阅的用户。
-	ws.subscription.Sub(client, sub.SubscribeUserID, sub.UnsubscribeUserID)
+	ws.subscription.Sub(client, sub.SubscribeUserIds, sub.UnsubscribeUserIds)
 
 	var resp *pb.RspSubUserOnlineStatus
 	// 如果有订阅用户，查询这些用户的在线状态。
-	if len(sub.SubscribeUserID) > 0 {
-		resp.Subscribers = make([]*pb.SubUserOnlineStatusElem, 0, len(sub.SubscribeUserID))
-		for _, userID := range sub.SubscribeUserID {
+	if len(sub.SubscribeUserIds) > 0 {
+		resp.Subscribers = make([]*pb.SubUserOnlineStatusElem, 0, len(sub.SubscribeUserIds))
+		for _, userID := range sub.SubscribeUserIds {
 			platformIDs, err := ws.localOnlineCache.GetUserOnlinePlatform(client.UserCtx.Ctx, userID)
 			if err != nil {
 				glog.Slog.ErrorKVs(client.UserCtx.Ctx, "SubUserOnlineStatus GetUserOnlinePlatform failed", "err", err, "userID", userID)
@@ -66,7 +66,7 @@ func (ws *WsServer) SubUserOnlineStatus(client *Client, sub *pb.ReqSubUserOnline
 			// 添加用户的在线状态信息到响应中。
 			resp.Subscribers = append(resp.Subscribers, &pb.SubUserOnlineStatusElem{
 				UserID:            userID,
-				OnlinePlatformIDs: platformIDs,
+				OnlinePlatformIds: platformIDs,
 			})
 		}
 	}

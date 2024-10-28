@@ -41,23 +41,22 @@ type portalServiceImp struct {
 // -----------------------User service layer implementation------------------------
 // ================================================================================
 
-func (g portalServiceImp) UserCreate(info request.UserCreate) (out response.UserCreate, err error) {
+func (g *portalServiceImp) UserCreate(info request.UserCreate) (out response.UserCreate, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserDelete(info request.UserDelete) (out response.UserDelete, err error) {
+func (g *portalServiceImp) UserDelete(info request.UserDelete) (out response.UserDelete, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserUpdate(info request.UserUpdate) (out response.UserUpdate, err error) {
+func (g *portalServiceImp) UserUpdate(info request.UserUpdate) (out response.UserUpdate, err error) {
 	//todo
 	return
 }
-func (g portalServiceImp) UserList(info request.UserList) (out response.UserList, err error) {
-
+func (g *portalServiceImp) UserList(info request.UserList) (out response.UserList, err error) {
 	count, err := g.dao.WithContext(info.Ctx).Count(model.User{}, nil, nil)
 	if err != nil {
-		return response.UserList{}, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
+		return out, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
 	}
 
 	var users []model.User
@@ -65,7 +64,7 @@ func (g portalServiceImp) UserList(info request.UserList) (out response.UserList
 		return db.Scopes(gcommon.Paginate(info.CurrentPage, info.PageCount))
 	}, &users)
 	if err != nil {
-		return response.UserList{}, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
+		return out, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
 	}
 
 	out.UserList = gcommon.SliceConvert(users, func(user model.User) response.User {

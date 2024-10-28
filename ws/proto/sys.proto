@@ -6,15 +6,15 @@ import "dispatch_enum.proto";
 
 // grp:1 cmd:1 订阅用户在线状态
 message ReqSubUserOnlineStatus {
-  repeated string subscribeUserID = 1;
-  repeated string unsubscribeUserID = 2;
+  repeated string subscribe_user_ids = 1;
+  repeated string unsubscribe_user_ids = 2;
 }
 message RspSubUserOnlineStatus {
   repeated SubUserOnlineStatusElem subscribers = 1;
 }
 message SubUserOnlineStatusElem {
   string userID = 1;
-  repeated int32 onlinePlatformIDs = 2;
+  repeated int32 online_platform_ids = 2;
 }
 
 // grp:1 cmd:2 用户踢下线
@@ -25,11 +25,11 @@ message RpcUserKickOff {
 // grp:1 cmd:3 推送消息给其他用户
 message ReqPushMsgToOther {
   bool all = 1; // 是否推送给所有用户
-  string fromUserID = 2; // 推送消息的用户ID
-  string toUserID = 3; // 推送给指定用户
-  int32 platformID = 4; // 推送消息的平台ID
-  int32 grpID = 5; // 推送消息的群组ID
-  int32 cmdID = 6; // 推送消息的命令ID
+  string from_user_id = 2; // 推送消息的用户ID
+  string to_user_id = 3; // 推送给指定用户
+  int32 platform_id = 4; // 推送消息的平台ID
+  int32 grp_id = 5; // 推送消息的群组ID
+  int32 cmd_id = 6; // 推送消息的命令ID
   bytes data = 7; // 消息内容
 }
 message RspPushMsgToOther {

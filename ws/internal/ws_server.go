@@ -341,7 +341,7 @@ func (ws *WsServer) subscribe() {
 					client.w.Unlock()
 				}
 			} else {
-				oldClients, userOK, clientOK := ws.GetUserPlatformCons(msg.ToUserID, int(msg.PlatformID))
+				oldClients, userOK, clientOK := ws.GetUserPlatformCons(msg.ToUserId, int(msg.PlatformId))
 				if userOK && clientOK {
 					for _, oldClient := range oldClients {
 						if oldClient.closed.Load() {
