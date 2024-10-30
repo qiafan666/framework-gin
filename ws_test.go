@@ -9,9 +9,9 @@ import (
 )
 
 type Req struct {
-	RequestID string `json:"request_id"   validate:"required"`
-	GrpID     uint8  `json:"grp_id" validate:"required"` // 消息组id
-	CmdID     uint8  `json:"cmd_id" validate:"required"` // 消息的ID
+	RequestId string `json:"request_id"   validate:"required"`
+	GrpId     uint8  `json:"grp_id" validate:"required"` // 消息组id
+	CmdId     uint8  `json:"cmd_id" validate:"required"` // 消息的ID
 	Data      []byte `json:"data"`
 }
 
@@ -23,9 +23,9 @@ func TestEncode(t *testing.T) {
 	}
 
 	req := &Req{
-		RequestID: "abcdefg",
-		GrpID:     2,
-		CmdID:     1,
+		RequestId: "abcdefg",
+		GrpId:     2,
+		CmdId:     1,
 		Data:      marshal,
 	}
 
