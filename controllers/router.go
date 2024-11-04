@@ -11,10 +11,12 @@ func RegisterRouter(r *gin.Engine) {
 		Use(middleware.Common).
 		Use(middleware.CheckToken).
 		GET("/health", middleware.Health)
+	rootGroup := r.Group("v1")
+
 	//注册controller
 	portalController := NewPortalControllerInstance()
 
-	portalGroup := r.Group("v1/portal")
+	portalGroup := rootGroup.Group("portal")
 	{
 		//portalGroup.POST("/user/create", portalController.UserCreate)
 		//portalGroup.POST("/user/delete", portalController.UserDelete)

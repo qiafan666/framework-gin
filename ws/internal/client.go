@@ -204,7 +204,7 @@ func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Me
 		}
 	} else {
 		mReply.Code = code
-		mReply.Msg = gerr.GetCodeAndMsg(code, c.UserCtx.Language)
+		mReply.Msg = gerr.GetLanguageMsg(code, c.UserCtx.Language)
 	}
 	glog.Slog.DebugKVs(ctx, "replyMessage", "resp", mReply.String())
 

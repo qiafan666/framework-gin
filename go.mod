@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
-	github.com/qiafan666/gotato v1.1.29
+	github.com/qiafan666/gotato v1.1.30
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/swaggo/swag v1.16.3
 	github.com/vmihailenco/msgpack/v5 v5.4.1
