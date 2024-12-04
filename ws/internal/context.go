@@ -56,7 +56,7 @@ func (c *UserConnContext) Value(key any) any {
 
 func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnContext {
 
-	connID := gcast.ToString(gid.RandID64())
+	connID := gcast.ToString(gid.RandID())
 	ctx := glog.SetTraceId(constant.PlatformIDToName(gcast.ToInt(req.Header.Get(common.HeaderPlatformID))) + "-" + connID)
 	x := &UserConnContext{
 		RespWriter: respWriter,

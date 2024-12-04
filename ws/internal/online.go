@@ -9,6 +9,7 @@ import (
 	"framework-gin/ws/proto/pb"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/glog"
+	"github.com/qiafan666/gotato/commons/gtime"
 	"math/rand"
 	"time"
 )
@@ -119,7 +120,7 @@ func (ws *WsServer) ChangeOnlineStatus(concurrent int) {
 		case now := <-renewalTicker.C: // 每次 renewalTicker 触发时，检查需要更新的用户状态
 			deadline := now.Add(-constant.OnlineExpire / 3)
 			users := ws.clients.GetAllUserStatus(deadline, now) // 获取当前时间段内的用户状态
-			glog.Slog.DebugKVs(function.WsCtx, "CheckOnlineStatus renewal ticker", "deadline", deadline, "nowtime", now, "num", len(users), "users", users)
+			glog.Slog.DebugKVs(function.WsCtx, "CheckOnlineStatus renewal ticker", "deadline", gtime.GetTimeStampByFormat(deadline.String()), "nowtime", gtime.GetTimeStampByFormat(now.String()), "num", len(users), "users", users)
 			pushUserState(users...) // 推送用户状态
 		case state := <-ws.clients.UserState(): // 当有用户状态变化时
 			glog.Slog.DebugKVs(function.WsCtx, "CheckOnlineStatus OnlineCache user online change", "userID", state.UserID, "online", state.Online, "offline", state.Offline)
