@@ -9,7 +9,6 @@ import (
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/glog"
 	"github.com/redis/go-redis/v9"
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 type ChannelInterface interface {
@@ -48,7 +47,7 @@ func (m *channelImpl) MsgSubscribe(ctx context.Context, channel string) <-chan *
 		defer pubsub.Close()
 		for msg := range pubsub.Channel() {
 			var pubSubMsg *pb.ReqPushMsgToOther
-			if err := msgpack.Unmarshal([]byte(msg.Payload), &pubSubMsg); err != nil {
+			if err := proto.Unmarshal([]byte(msg.Payload), pubSubMsg); err != nil {
 				glog.Slog.ErrorKVs(function.WsCtx, "msgpack unmarshal error", "err", err)
 				continue
 			}

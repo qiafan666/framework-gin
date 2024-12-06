@@ -175,6 +175,7 @@ func (u *userMap) DeleteClients(userID string, clients []*Client) (isDeleteUser 
 	return true
 }
 
+// GetAllUserStatus 返回死亡时间在用户状态时间之后的用户状态
 func (u *userMap) GetAllUserStatus(deadline time.Time, nowtime time.Time) (result []UserState) {
 	u.lock.RLock()
 	defer u.lock.RUnlock()

@@ -348,6 +348,7 @@ func (c *Client) KickOnlineMessage(reason pb.KickReason) error {
 	return err
 }
 
+// PushUserOnlineStatus 推送用户在线状态
 func (c *Client) PushUserOnlineStatus(data []byte) error {
 	resp := Resp{
 		GrpID: uint8(pb.Grp_Sys),
