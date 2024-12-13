@@ -173,7 +173,7 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 	wsLongConn := newGWebSocket(ws.handshakeTimeout, ws.writeBufferSize)
 	if err = wsLongConn.GenerateLongConn(c.Writer, c.Request); err != nil {
 		// 如果长连接创建失败，握手过程中已处理错误
-		glog.Slog.WarnF(connCtx.Ctx, "长连接创建失败: %v", err)
+		glog.Slog.WarnF(connCtx.TraceCtx, "长连接创建失败: %v", err)
 		return
 	} else {
 		// 检查是否需要通过WebSocket发送正常响应
@@ -189,6 +189,10 @@ func (ws *WsServer) wsHandler(c *gin.Context) {
 	client := ws.clientPool.Get().(*Client)
 	client.ResetClient(connCtx, wsLongConn, ws)
 	client.parseToken = parseToken
+	client.UserCtx.TraceCtx = SetTraceCtx(
+		[]any{constant.PlatformIDToName(gcast.ToInt(client.UserCtx.Req.Header.Get(common.HeaderPlatformID))),
+			connCtx.ConnID, connCtx.RemoteAddr, parseToken.UserId},
+	)
 
 	// 将客户端注册到服务器并开始消息处理
 	ws.registerChan <- client
@@ -235,7 +239,7 @@ func (ws *WsServer) multiTerminalLoginChecker(clientOK bool, oldClients []*Clien
 		for _, c := range oldClients {
 			err := c.KickOnlineMessage(pb.KickReason_OnlyOneClient)
 			if err != nil {
-				glog.Slog.WarnKVs(c.UserCtx.Ctx, "multiTerminalLoginChecker,KickOnlineMessage", "err", err)
+				glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "multiTerminalLoginChecker,KickOnlineMessage", "err", err)
 			}
 		}
 	}
@@ -250,16 +254,16 @@ func (ws *WsServer) registerClient(client *Client) {
 	oldClients, userOK, clientOK = ws.clients.Get(client.parseToken.UserId, client.UserCtx.PlatformID)
 	if !userOK {
 		ws.clients.Set(client.parseToken.UserId, client)
-		glog.Slog.DebugKVs(client.UserCtx.Ctx, "registerClient,user not exist", "userID", client.parseToken.UserId, "platformID", client.UserCtx.PlatformID)
+		glog.Slog.DebugKVs(client.UserCtx.TraceCtx, "registerClient,user not exist", "userID", client.parseToken.UserId, "platformID", client.UserCtx.PlatformID)
 		ws.onlineUserNum.Add(1)
 		ws.onlineUserConnNum.Add(1)
 	} else {
 		ws.multiTerminalLoginChecker(clientOK, oldClients, client)
-		glog.Slog.DebugKVs(client.UserCtx.Ctx, "registerClient,user exist", "userID", client.parseToken.UserId, "platformID", client.UserCtx.PlatformID)
+		glog.Slog.DebugKVs(client.UserCtx.TraceCtx, "registerClient,user exist", "userID", client.parseToken.UserId, "platformID", client.UserCtx.PlatformID)
 		if clientOK {
 			ws.clients.Set(client.parseToken.UserId, client)
 			// 当前平台连接已经存在，增加连接数
-			glog.Slog.InfoKVs(client.UserCtx.Ctx, "registerClient,repeat login", "userID", client.parseToken.UserId, "platformID",
+			glog.Slog.InfoKVs(client.UserCtx.TraceCtx, "registerClient,repeat login", "userID", client.parseToken.UserId, "platformID",
 				client.UserCtx.PlatformID, "old remote addr", getRemoteAdders(oldClients))
 			ws.onlineUserConnNum.Add(1)
 		} else {
@@ -271,7 +275,7 @@ func (ws *WsServer) registerClient(client *Client) {
 	//TODO 多节点通知在线状态，如何处理
 
 	glog.Slog.InfoKVs(
-		client.UserCtx.Ctx,
+		client.UserCtx.TraceCtx,
 		"registerClient,user online",
 		"online user Num",
 		ws.onlineUserNum.Load(),
@@ -300,7 +304,7 @@ func (ws *WsServer) unregisterClient(client *Client) {
 	}
 	ws.onlineUserConnNum.Add(-1)
 	ws.subscription.DelClient(client)
-	glog.Slog.WarnKVs(client.UserCtx.Ctx, "unregisterClient user offline", "close reason", client.closedErr, "online user Num",
+	glog.Slog.WarnKVs(client.UserCtx.TraceCtx, "unregisterClient user offline", "close reason", client.closedErr, "online user Num",
 		ws.onlineUserNum.Load(), "online user conn Num", ws.onlineUserConnNum.Load())
 }
 
@@ -332,10 +336,10 @@ func (ws *WsServer) subscribe() {
 						continue
 					}
 					client.w.Lock()
-					glog.Slog.DebugKVs(client.UserCtx.Ctx, "subscribe message", "msg", msg.String())
+					glog.Slog.DebugKVs(client.UserCtx.TraceCtx, "subscribe message", "msg", msg.String())
 					err := client.PushMessage(msg)
 					if err != nil {
-						glog.Slog.ErrorKVs(client.UserCtx.Ctx, "subscribe message,PushMessage error", "err", err)
+						glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "subscribe message,PushMessage error", "err", err)
 						continue
 					}
 					client.w.Unlock()
@@ -349,10 +353,10 @@ func (ws *WsServer) subscribe() {
 						}
 						oldClient.w.Lock()
 						for _, client := range oldClients {
-							glog.Slog.DebugKVs(client.UserCtx.Ctx, "subscribe message", "msg", msg.String())
+							glog.Slog.DebugKVs(client.UserCtx.TraceCtx, "subscribe message", "msg", msg.String())
 							err := client.PushMessage(msg)
 							if err != nil {
-								glog.Slog.ErrorKVs(client.UserCtx.Ctx, "subscribe message,PushMessage error", "err", err)
+								glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "subscribe message,PushMessage error", "err", err)
 								continue
 							}
 						}

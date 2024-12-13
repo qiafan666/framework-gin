@@ -58,9 +58,9 @@ func (ws *WsServer) SubUserOnlineStatus(client *Client, sub *pb.ReqSubUserOnline
 	if len(sub.SubscribeUserIds) > 0 {
 		resp.Subscribers = make([]*pb.SubUserOnlineStatusElem, 0, len(sub.SubscribeUserIds))
 		for _, userID := range sub.SubscribeUserIds {
-			platformIDs, err := ws.localOnlineCache.GetUserOnlinePlatform(client.UserCtx.Ctx, userID)
+			platformIDs, err := ws.localOnlineCache.GetUserOnlinePlatform(client.UserCtx.TraceCtx, userID)
 			if err != nil {
-				glog.Slog.ErrorKVs(client.UserCtx.Ctx, "SubUserOnlineStatus GetUserOnlinePlatform failed", "err", err, "userID", userID)
+				glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "SubUserOnlineStatus GetUserOnlinePlatform failed", "err", err, "userID", userID)
 				return nil, gerr.UnKnowError
 			}
 			// 添加用户的在线状态信息到响应中。

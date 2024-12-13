@@ -35,7 +35,7 @@ func Health(client *internal.Client, req proto.Message) (proto.Message, int) {
 	// 将 proto.Message 转换为 *pb.ReqHealth
 	pbReq, ok := req.(*pb.ReqHealth)
 	if !ok {
-		glog.Slog.ErrorKVs(client.UserCtx.Ctx, "req type error", "req", req)
+		glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "req type error", "req", req)
 		return nil, gerr.ParameterError
 	}
 	return logicController.logicService.Health(client, pbReq)

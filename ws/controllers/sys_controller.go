@@ -34,7 +34,7 @@ func InitSysController() {
 func SubUserOnlineStatus(client *internal.Client, req proto.Message) (proto.Message, int) {
 	pbReq, ok := req.(*pb.ReqSubUserOnlineStatus)
 	if !ok {
-		glog.Slog.ErrorKVs(client.UserCtx.Ctx, "req type error", "req", req)
+		glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "req type error", "req", req)
 		return nil, gerr.ParameterError
 	}
 
@@ -45,7 +45,7 @@ func SubUserOnlineStatus(client *internal.Client, req proto.Message) (proto.Mess
 func PushMsgToOther(client *internal.Client, req proto.Message) (proto.Message, int) {
 	pbReq, ok := req.(*pb.ReqPushMsgToOther)
 	if !ok {
-		glog.Slog.ErrorKVs(client.UserCtx.Ctx, "req type error", "req", req)
+		glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "req type error", "req", req)
 		return nil, gerr.ParameterError
 	}
 

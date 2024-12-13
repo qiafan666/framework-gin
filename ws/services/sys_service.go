@@ -37,7 +37,7 @@ func (s sysServiceImp) SubUserOnlineStatus(client *internal.Client, info *pb.Req
 }
 func (s sysServiceImp) PushMsgToOther(client *internal.Client, info *pb.ReqPushMsgToOther) (out *pb.RspPushMsgToOther, code int) {
 
-	err := client.PubMessage(client.UserCtx.Ctx, info)
+	err := client.PubMessage(client.UserCtx.TraceCtx, info)
 	if err != nil {
 		return nil, gerr.UnKnowError
 	}

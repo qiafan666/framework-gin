@@ -75,7 +75,7 @@ func (c *Client) pingHandler(appData string) error {
 		return err
 	}
 
-	glog.Slog.DebugKVs(c.UserCtx.Ctx, "pingHandler", "appData", appData)
+	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "pingHandler", "appData", appData)
 	return c.writePongMsg(appData)
 }
 
@@ -91,7 +91,7 @@ func (c *Client) readMessage() {
 	defer func() {
 		if r := recover(); r != nil {
 			c.closedErr = ErrPanic
-			glog.Slog.PanicKVs(c.UserCtx.Ctx, "readMessage", "err", r)
+			glog.Slog.PanicKVs(c.UserCtx.TraceCtx, "readMessage", "err", r)
 		}
 		c.close()
 	}()
@@ -105,12 +105,12 @@ func (c *Client) readMessage() {
 	for {
 		messageType, message, returnErr := c.conn.ReadMessage()
 		if returnErr != nil {
-			glog.Slog.WarnKVs(c.UserCtx.Ctx, "readMessage", "err", returnErr, "messageType", messageType)
+			glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "readMessage", "err", returnErr, "messageType", messageType)
 			c.closedErr = returnErr
 			return
 		}
 
-		glog.Slog.DebugKVs(c.UserCtx.Ctx, "readMessage", "messageType", messageType)
+		glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "readMessage", "messageType", messageType)
 		if c.closed.Load() {
 			// 连接刚刚关闭，但协程尚未退出的情况
 			c.closedErr = ErrConnClosed
@@ -130,7 +130,7 @@ func (c *Client) readMessage() {
 			return
 		case PingMessage:
 			err := c.writePongMsg("")
-			glog.Slog.ErrorKVs(c.UserCtx.Ctx, "readMessage", "writePongMsg err", err)
+			glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "readMessage", "writePongMsg err", err)
 		case CloseMessage:
 			c.closedErr = ErrClientClosed
 			return
@@ -155,24 +155,22 @@ func (c *Client) handleMessage(message []byte) error {
 
 	err := c.LongConnServer.Decode(message, binaryReq)
 	if err != nil {
-		glog.Slog.ErrorKVs(c.UserCtx.Ctx, "handleMessage", "decode error", err)
+		glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "handleMessage", "decode error", err)
 		return err
 	}
 	if err = c.LongConnServer.Validate(binaryReq); err != nil {
-		glog.Slog.ErrorKVs(c.UserCtx.Ctx, "handleMessage", "validate error", err)
+		glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "handleMessage", "validate error", err)
 		return err
 	}
 
-	c.UserCtx.Ctx = WithMustInfoCtx(
-		[]any{constant.PlatformIDToName(c.UserCtx.PlatformID), c.UserCtx.GetConnID(), c.parseToken.UserId, binaryReq.RequestId, c.UserCtx.RemoteAddr},
-	)
+	c.UserCtx.TraceCtx = AppendTraceCtx(c.UserCtx.TraceCtx, []any{binaryReq.RequestId, binaryReq.GrpId, binaryReq.CmdId})
 
-	glog.Slog.DebugKVs(c.UserCtx.Ctx, "handleMessage", "req", binaryReq.String())
+	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "handleMessage", "req", binaryReq.String())
 	startTime := time.Now()
 	data, code := c.MsgHandle.DoMsgHandler(c, binaryReq)
-	glog.Slog.DebugKVs(c.UserCtx.Ctx, "handleMessage DoMsgHandler", "data", data, "code", code, "time", time.Since(startTime))
+	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "handleMessage DoMsgHandler", "data", data, "code", code, "time", time.Since(startTime))
 
-	return c.replyMessage(c.UserCtx.Ctx, binaryReq, data, code)
+	return c.replyMessage(c.UserCtx.TraceCtx, binaryReq, data, code)
 }
 
 func (c *Client) close() {
@@ -248,7 +246,7 @@ func (c *Client) writeBinaryMsg(resp Resp) error {
 func (c *Client) activeHeartbeat() {
 	if c.UserCtx.PlatformID == constant.WebPlatformID {
 		go func() {
-			glog.Slog.DebugKVs(c.UserCtx.Ctx, "activeHeartbeat start.")
+			glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "activeHeartbeat start.")
 			ticker := time.NewTicker(pingPeriod)
 			defer ticker.Stop()
 
@@ -256,7 +254,7 @@ func (c *Client) activeHeartbeat() {
 				select {
 				case <-ticker.C:
 					if err := c.writePingMsg(); err != nil {
-						glog.Slog.WarnKVs(c.UserCtx.Ctx, "activeHeartbeat", "err", err)
+						glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "activeHeartbeat", "err", err)
 						return
 					}
 				case <-c.hbCtx.Done():
@@ -286,7 +284,7 @@ func (c *Client) writePingMsg() error {
 func (c *Client) writePongMsg(appData string) error {
 	//glog.Slog.DebugKVs(c.userCtx.Ctx, "writePongMsg", "appData", appData)
 	if c.closed.Load() {
-		glog.Slog.WarnKVs(c.UserCtx.Ctx, "writePongMsg", "appdata", appData, "closed err", c.closedErr)
+		glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "writePongMsg", "appdata", appData, "closed err", c.closedErr)
 		return nil
 	}
 
@@ -295,12 +293,12 @@ func (c *Client) writePongMsg(appData string) error {
 
 	err := c.conn.SetWriteDeadline(writeWait)
 	if err != nil {
-		glog.Slog.WarnKVs(c.UserCtx.Ctx, "writePongMsg", "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", writeWait, "appData", appData)
+		glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "writePongMsg", "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", writeWait, "appData", appData)
 		return gerr.Wrap(err)
 	}
 	err = c.conn.WriteMessage(PongMessage, []byte(appData))
 	if err != nil {
-		glog.Slog.WarnKVs(c.UserCtx.Ctx, "writePongMsg", "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
+		glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "writePongMsg", "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
 	}
 
 	return gerr.Wrap(err)
@@ -320,7 +318,7 @@ func (c *Client) PushMessage(req *pb.ReqPushMsgToOther) error {
 		CmdID: uint8(req.CmdId),
 		Data:  req.Data,
 	}
-	glog.Slog.DebugKVs(c.UserCtx.Ctx, "PushMessage", "resp", resp.String())
+	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "PushMessage", "resp", resp.String())
 	err := c.writeBinaryMsg(resp)
 	c.close()
 	return err
@@ -334,7 +332,7 @@ func (c *Client) KickOnlineMessage(reason pb.KickReason) error {
 	}
 	protoData, err := proto.Marshal(pbRsp)
 	if err != nil {
-		glog.Slog.ErrorKVs(c.UserCtx.Ctx, "KickOnlineMessage", "marshal data error", err)
+		glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "KickOnlineMessage", "marshal data error", err)
 		return err
 	}
 	resp := Resp{
@@ -342,7 +340,7 @@ func (c *Client) KickOnlineMessage(reason pb.KickReason) error {
 		CmdID: uint8(pb.CmdSys_KickOnlineUser),
 		Data:  protoData,
 	}
-	glog.Slog.DebugKVs(c.UserCtx.Ctx, "KickOnlineMessage", "resp", resp.String())
+	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "KickOnlineMessage", "resp", resp.String())
 	err = c.writeBinaryMsg(resp)
 	c.close()
 	return err

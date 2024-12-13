@@ -11,7 +11,6 @@ import (
 	"github.com/qiafan666/gotato/commons/gid"
 	"github.com/qiafan666/gotato/commons/glog"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 )
@@ -26,7 +25,7 @@ type UserConnContext struct {
 	Language   string
 	PlatformID int
 	IsCompress bool
-	Ctx        context.Context
+	TraceCtx   context.Context
 }
 
 func (c *UserConnContext) Deadline() (deadline time.Time, ok bool) {
@@ -56,27 +55,18 @@ func (c *UserConnContext) Value(key any) any {
 
 func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnContext {
 
-	connID := gcast.ToString(gid.RandID())
-	ctx := glog.SetTraceId(constant.PlatformIDToName(gcast.ToInt(req.Header.Get(common.HeaderPlatformID))) + "-" + connID)
 	x := &UserConnContext{
 		RespWriter: respWriter,
 		Req:        req,
 		Path:       req.URL.Path,
 		Method:     req.Method,
-		RemoteAddr: req.RemoteAddr,
-		ConnID:     connID,
+		RemoteAddr: gcommon.RemoteIP(req),
+		ConnID:     gcast.ToString(gid.RandID()),
 		PlatformID: gcast.ToInt(req.Header.Get(common.HeaderPlatformID)),
-		Ctx:        ctx,
 	}
 	x.IsCompress = x.GetCompression()
 	x.Language = x.GetLanguage()
 	return x
-}
-
-func newTempContext() *UserConnContext {
-	return &UserConnContext{
-		Req: &http.Request{URL: &url.URL{}},
-	}
 }
 
 func (c *UserConnContext) GetRemoteAddr() string {
@@ -229,7 +219,12 @@ func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remo
 	}
 }
 
-// WithMustInfoCtx platform-connID-userID-requestID-remoteAddr
-func WithMustInfoCtx(values []any) context.Context {
+// SetTraceCtx platform-connID-remoteAddr-userID
+func SetTraceCtx(values []any) context.Context {
 	return glog.SetTraceId(gcommon.Slice2String(values, "-"))
+}
+
+// AppendTraceCtx platform-connID-remoteAddr-userID-requestID-grp-cmd
+func AppendTraceCtx(ctx context.Context, values []any) context.Context {
+	return glog.SetTraceId(glog.GetTraceId(ctx) + "-" + gcommon.Slice2String(values, "-"))
 }

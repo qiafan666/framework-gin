@@ -100,7 +100,7 @@ func (m *MsgHandle) DoMsgHandler(client *Client, req *Req) (proto.Message, int) 
 	msgID := genMsgID(req.GrpId, req.CmdId)
 	h, ok := m.Apis[msgID]
 	if !ok {
-		glog.Slog.ErrorKVs(client.UserCtx.Ctx, "DoMsgHandler", "msgID not found,MsgID", msgID)
+		glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "DoMsgHandler", "msgID not found,MsgID", msgID)
 		return nil, gerr.UnKnowError
 	}
 
@@ -109,7 +109,7 @@ func (m *MsgHandle) DoMsgHandler(client *Client, req *Req) (proto.Message, int) 
 	if h.req != nil {
 		dataReq = proto.Clone(h.req)
 		if err := proto.Unmarshal(req.Data, dataReq); err != nil {
-			glog.Slog.ErrorKVs(client.UserCtx.Ctx, "DoMsgHandler", "unmarshal req pb msg err", err)
+			glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "DoMsgHandler", "unmarshal req pb msg err", err)
 			return nil, gerr.UnKnowError
 		}
 	}
