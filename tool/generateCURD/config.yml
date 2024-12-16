@@ -1,6 +1,6 @@
 base:
     is_dev : false
-out_dir : ../../model  # 输出目录
+out_dir : ./model  # 输出目录
 url_tag : json # web url tag(json,db(https://github.com/google/go-querystring))
 language :  # 语言(English,中 文)
 db_tag : gorm # 数据库标签名(gorm,db)
