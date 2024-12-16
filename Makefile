@@ -26,8 +26,8 @@ curd:
 
 
 # 生成ws proto代码
-.PHONY: ws
-ws:
+.PHONY: proto
+proto:
 	@echo "当前目录: $(CUR_DIR)"
 	@echo "ws proto目录: $(WS_PROTO_DIR)"
 	protoc -I=$(WS_PROTO_DIR) --go_out=$(WS_PROTO_DIR) $(WS_PROTO_DIR)/*.proto
