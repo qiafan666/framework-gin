@@ -57,7 +57,7 @@ func (g *portalServiceImp) UserUpdate(info request.UserUpdate) (out response.Use
 func (g *portalServiceImp) UserList(info request.UserList) (out response.UserList, err error) {
 	count, err := g.dao.WithContext(info.Ctx).Count(model.User{}, nil, nil)
 	if err != nil {
-		glog.Slog.ErrorKVs(info.Ctx, "UserList error", "err", err)
+		glog.Slog.ErrorKVs(info.Ctx, "Count error", "err", err)
 		return out, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
 	}
 
@@ -66,7 +66,7 @@ func (g *portalServiceImp) UserList(info request.UserList) (out response.UserLis
 		return db.Scopes(gcommon.Paginate(info.CurrentPage, info.PageCount))
 	}, &users)
 	if err != nil {
-		glog.Slog.ErrorKVs(info.Ctx, "UserList error", "err", err)
+		glog.Slog.ErrorKVs(info.Ctx, "Find error", "err", err)
 		return out, gerr.NewLang(gerr.UnKnowError, info.Language, info.RequestId)
 	}
 
