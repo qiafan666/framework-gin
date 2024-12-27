@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"framework-gin/common"
-	"framework-gin/common/errs"
 	"framework-gin/ws/constant"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"
@@ -149,15 +148,15 @@ func (c *UserConnContext) SetToken(token string) {
 func (c *UserConnContext) ParseEssentialArgs() error {
 	_, exists := c.GetHeader(common.HeaderAuthorization)
 	if !exists {
-		return gerr.NewLang(errs.ConnArgsErr, c.Language).WithDetail("auth token is empty")
+		return gerr.NewLang(gerr.ParameterError, c.Language).WithDetail("auth token is empty")
 	}
 	platformIDStr, exists := c.GetHeader(common.HeaderPlatformID)
 	if !exists {
-		return gerr.NewLang(errs.ConnArgsErr, c.Language).WithDetail("platformID is empty")
+		return gerr.NewLang(gerr.ParameterError, c.Language).WithDetail("platformID is empty")
 	}
 	_, err := strconv.Atoi(platformIDStr)
 	if err != nil {
-		return gerr.NewLang(errs.ConnArgsErr, c.Language).WithDetail("platformID is not a number")
+		return gerr.NewLang(gerr.ParameterError, c.Language).WithDetail("platformID is not a number")
 	}
 	return nil
 }
@@ -212,7 +211,7 @@ func GetCtxInfosE(ctx context.Context) (platform, connID, userID, requestID, rem
 
 func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remoteAddr string) {
 	if traceId, ok := ctx.Value("trace_id").(string); ok {
-		slice := gcommon.String2Slice(traceId, "-")
+		slice := gcommon.Str2Slice(traceId, "-")
 		return slice[0], slice[1], slice[2], slice[3], slice[4]
 	} else {
 		return "", "", "", "", ""
@@ -221,10 +220,10 @@ func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remo
 
 // SetTraceCtx platform-connID-remoteAddr-userID
 func SetTraceCtx(values []any) context.Context {
-	return glog.SetTraceId(gcommon.Slice2String(values, "-"))
+	return glog.SetTraceId(gcommon.Slice2Str(values, "-"))
 }
 
 // AppendTraceCtx platform-connID-remoteAddr-userID-requestID-grp-cmd
 func AppendTraceCtx(ctx context.Context, values []any) context.Context {
-	return glog.SetTraceId(glog.GetTraceId(ctx) + "-" + gcommon.Slice2String(values, "-"))
+	return glog.SetTraceId(glog.GetTraceId(ctx) + "-" + gcommon.Slice2Str(values, "-"))
 }
