@@ -12,5 +12,7 @@ server:
   simple_stdout: false
 swagger:
   enable: true
-pprof:
-  enable: true
+feiShu:
+  enable: false
+  url: "url"
+  group_id: "group_id"
