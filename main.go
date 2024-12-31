@@ -4,7 +4,6 @@ import (
 	"framework-gin/common/errs"
 	"framework-gin/controllers"
 	_ "framework-gin/docs"
-	"framework-gin/ws"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/v2"
 )
@@ -20,6 +19,6 @@ func main() {
 	server.RegisterErrorCodeAndMsg(gerr.MsgLanguageChinese, errs.ChineseCodeMsg())
 	server.StartServer(v2.GinService)
 	controllers.RegisterRouter(server.App())
-	ws.Register(server.App())
+	//ws.Register(server.App())
 	server.WaitClose()
 }
