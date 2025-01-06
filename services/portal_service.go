@@ -1,10 +1,11 @@
 package services
 
 import (
+	"framework-gin/common/errs"
 	"framework-gin/dao"
 	"framework-gin/pojo/request"
 	"framework-gin/pojo/response"
-	"github.com/qiafan666/gotato/commons/glog"
+	"github.com/qiafan666/gotato/commons/gerr"
 	"sync"
 )
 
@@ -51,6 +52,6 @@ func (g *portalServiceImp) UserUpdate(info request.UserUpdate) (out response.Use
 	return
 }
 func (g *portalServiceImp) UserList(info request.UserList) (out response.UserList, err error) {
-	glog.Slog.InfoKVs(info.Ctx, "UserCreate", "info", 1, "gconfig", 2)
-	return
+
+	return out, gerr.NewLang(errs.BusinessError, info.Language)
 }
