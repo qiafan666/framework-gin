@@ -6,6 +6,7 @@ import (
 	"framework-gin/pojo/request"
 	"framework-gin/pojo/response"
 	"github.com/qiafan666/gotato/commons/gerr"
+	"github.com/qiafan666/gotato/commons/glog"
 	"sync"
 )
 
@@ -52,6 +53,6 @@ func (g *portalServiceImp) UserUpdate(info request.UserUpdate) (out response.Use
 	return
 }
 func (g *portalServiceImp) UserList(info request.UserList) (out response.UserList, err error) {
-
+	glog.Slog.ErrorF(info.Ctx, "UserList not implemented")
 	return out, gerr.NewLang(errs.BusinessError, info.Language)
 }
