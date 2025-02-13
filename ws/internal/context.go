@@ -8,7 +8,6 @@ import (
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/gid"
-	"github.com/qiafan666/gotato/commons/glog"
 	"net/http"
 	"strconv"
 	"time"
@@ -220,10 +219,10 @@ func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remo
 
 // SetTraceCtx platform-connID-remoteAddr-userID
 func SetTraceCtx(values []any) context.Context {
-	return glog.SetTraceId(gcommon.Slice2Str(values, "-"))
+	return gcommon.SetTraceId(gcommon.Slice2Str(values, "-"))
 }
 
 // AppendTraceCtx platform-connID-remoteAddr-userID-requestID-grp-cmd
 func AppendTraceCtx(ctx context.Context, values []any) context.Context {
-	return glog.SetTraceId(glog.GetTraceId(ctx) + "-" + gcommon.Slice2Str(values, "-"))
+	return gcommon.SetTraceId(gcommon.GetTraceId(ctx) + "-" + gcommon.Slice2Str(values, "-"))
 }
