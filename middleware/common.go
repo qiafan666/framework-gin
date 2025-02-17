@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"framework-gin/common"
-	"framework-gin/common/function"
 	"framework-gin/pojo/request"
 	"github.com/gin-gonic/gin"
+	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/v2/middleware"
 	"net/http"
@@ -34,8 +34,8 @@ func Common(ctx *gin.Context) {
 	}
 
 	ctx.Set(common.BaseRequest, request.BaseRequest{
-		Ctx:       function.GetCtx(ctx),
-		RequestId: function.GetTraceId(ctx),
+		Ctx:       gcommon.SetRequestId(gcommon.GetRequestId(ctx)),
+		RequestId: gcommon.GetRequestId(ctx),
 		Language:  language,
 	})
 

@@ -209,8 +209,8 @@ func GetCtxInfosE(ctx context.Context) (platform, connID, userID, requestID, rem
 }
 
 func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remoteAddr string) {
-	if traceId, ok := ctx.Value("trace_id").(string); ok {
-		slice := gcommon.Str2Slice(traceId, "-")
+	if requestId, ok := ctx.Value("request_id").(string); ok {
+		slice := gcommon.Str2Slice(requestId, "-")
 		return slice[0], slice[1], slice[2], slice[3], slice[4]
 	} else {
 		return "", "", "", "", ""
@@ -219,10 +219,10 @@ func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remo
 
 // SetTraceCtx platform-connID-remoteAddr-userID
 func SetTraceCtx(values []any) context.Context {
-	return gcommon.SetTraceId(gcommon.Slice2Str(values, "-"))
+	return gcommon.SetRequestId(gcommon.Slice2Str(values, "-"))
 }
 
 // AppendTraceCtx platform-connID-remoteAddr-userID-requestID-grp-cmd
 func AppendTraceCtx(ctx context.Context, values []any) context.Context {
-	return gcommon.SetTraceId(gcommon.GetTraceId(ctx) + "-" + gcommon.Slice2Str(values, "-"))
+	return gcommon.SetRequestId(gcommon.GetRequestId(ctx) + "-" + gcommon.Slice2Str(values, "-"))
 }

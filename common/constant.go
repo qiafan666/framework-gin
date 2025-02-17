@@ -43,5 +43,4 @@ const (
 // 常量定义
 const (
 	CompressionGzip = "gzip"
-	RequestID       = "requestID"
 )

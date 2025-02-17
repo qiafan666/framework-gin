@@ -45,13 +45,6 @@ func BindAndValid(entity interface{}, ctx *gin.Context) error {
 	return nil
 }
 
-func GetTraceId(ctx *gin.Context) string {
-	if traceId, ok := ctx.Value("trace_id").(string); ok {
-		return traceId
-	} else {
-		return ""
-	}
-}
 func GetCtx(ctx *gin.Context) context.Context {
 	if v, ok := ctx.Value("ctx").(context.Context); ok {
 		return v

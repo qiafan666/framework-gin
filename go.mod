@@ -1,6 +1,6 @@
 module framework-gin
 
-go 1.22.4
+go 1.24.0
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -8,7 +8,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
-	github.com/qiafan666/gotato v1.1.76
+	github.com/qiafan666/gotato v1.1.77
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/swaggo/swag v1.16.3
 	google.golang.org/protobuf v1.35.2
