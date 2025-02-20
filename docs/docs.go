@@ -18,9 +18,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/portal/test": {
+        "/v1/user/create": {
             "post": {
-                "description": "Test",
+                "description": "User创建",
                 "consumes": [
                     "application/json"
                 ],
@@ -28,25 +28,127 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "test"
+                    "User"
                 ],
-                "summary": "Test",
+                "summary": "创建接口",
                 "parameters": [
                     {
-                        "description": "request.Test",
+                        "description": "User创建请求参数",
                         "name": "data",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.Test"
+                            "$ref": "#/definitions/request.UserCreate"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "User创建返回结果",
                         "schema": {
-                            "$ref": "#/definitions/response.Test"
+                            "$ref": "#/definitions/response.UserCreate"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/delete": {
+            "post": {
+                "description": "User删除",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "删除接口",
+                "parameters": [
+                    {
+                        "description": "User删除请求参数",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserDelete"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User删除返回结果",
+                        "schema": {
+                            "$ref": "#/definitions/response.UserDelete"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/list": {
+            "post": {
+                "description": "User列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "列表接口",
+                "parameters": [
+                    {
+                        "description": "User列表请求参数",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserList"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User列表返回结果",
+                        "schema": {
+                            "$ref": "#/definitions/response.UserList"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/user/update": {
+            "post": {
+                "description": "User更新",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "更新接口",
+                "parameters": [
+                    {
+                        "description": "User更新请求参数",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User更新返回结果",
+                        "schema": {
+                            "$ref": "#/definitions/response.UserUpdate"
                         }
                     }
                 }
@@ -54,15 +156,100 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "request.Test": {
+        "request.UserCreate": {
             "type": "object",
             "properties": {
-                "item": {
+                "age": {
+                    "description": "年龄",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "名称",
                     "type": "string"
                 }
             }
         },
-        "response.Test": {
+        "request.UserDelete": {
+            "type": "object",
+            "properties": {
+                "uuid": {
+                    "description": "UUID",
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserList": {
+            "type": "object",
+            "required": [
+                "current_page",
+                "page_count"
+            ],
+            "properties": {
+                "current_page": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "page_count": {
+                    "type": "integer",
+                    "maximum": 50
+                }
+            }
+        },
+        "request.UserUpdate": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "description": "年龄",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "名称",
+                    "type": "string"
+                },
+                "uuid": {
+                    "description": "UUID",
+                    "type": "string"
+                }
+            }
+        },
+        "response.User": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "description": "年龄",
+                    "type": "integer"
+                },
+                "created_time": {
+                    "type": "string"
+                },
+                "name": {
+                    "description": "名称",
+                    "type": "string"
+                },
+                "uuid": {
+                    "description": "UUID",
+                    "type": "string"
+                }
+            }
+        },
+        "response.UserCreate": {
+            "type": "object"
+        },
+        "response.UserDelete": {
+            "type": "object"
+        },
+        "response.UserList": {
+            "type": "object",
+            "properties": {
+                "user_list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.User"
+                    }
+                }
+            }
+        },
+        "response.UserUpdate": {
             "type": "object"
         }
     }

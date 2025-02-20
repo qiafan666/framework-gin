@@ -1,10 +1,69 @@
 definitions:
-  request.Test:
+  request.UserCreate:
     properties:
-      item:
+      age:
+        description: 年龄
+        type: integer
+      name:
+        description: 名称
         type: string
     type: object
-  response.Test:
+  request.UserDelete:
+    properties:
+      uuid:
+        description: UUID
+        type: string
+    type: object
+  request.UserList:
+    properties:
+      current_page:
+        minimum: 1
+        type: integer
+      page_count:
+        maximum: 50
+        type: integer
+    required:
+    - current_page
+    - page_count
+    type: object
+  request.UserUpdate:
+    properties:
+      age:
+        description: 年龄
+        type: integer
+      name:
+        description: 名称
+        type: string
+      uuid:
+        description: UUID
+        type: string
+    type: object
+  response.User:
+    properties:
+      age:
+        description: 年龄
+        type: integer
+      created_time:
+        type: string
+      name:
+        description: 名称
+        type: string
+      uuid:
+        description: UUID
+        type: string
+    type: object
+  response.UserCreate:
+    type: object
+  response.UserDelete:
+    type: object
+  response.UserList:
+    properties:
+      user_list:
+        items:
+          $ref: '#/definitions/response.User'
+        type: array
+    type: object
+  response.UserUpdate:
     type: object
 info:
   contact: {}
@@ -12,28 +71,94 @@ info:
   title: framework API Document
   version: "1"
 paths:
-  /v1/portal/test:
+  /v1/user/create:
     post:
       consumes:
       - application/json
-      description: Test
+      description: User创建
       parameters:
-      - description: request.Test
+      - description: User创建请求参数
         in: body
         name: data
         required: true
         schema:
-          $ref: '#/definitions/request.Test'
+          $ref: '#/definitions/request.UserCreate'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User创建返回结果
           schema:
-            $ref: '#/definitions/response.Test'
-      summary: Test
+            $ref: '#/definitions/response.UserCreate'
+      summary: 创建接口
       tags:
-      - test
+      - User
+  /v1/user/delete:
+    post:
+      consumes:
+      - application/json
+      description: User删除
+      parameters:
+      - description: User删除请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserDelete'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User删除返回结果
+          schema:
+            $ref: '#/definitions/response.UserDelete'
+      summary: 删除接口
+      tags:
+      - User
+  /v1/user/list:
+    post:
+      consumes:
+      - application/json
+      description: User列表
+      parameters:
+      - description: User列表请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserList'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User列表返回结果
+          schema:
+            $ref: '#/definitions/response.UserList'
+      summary: 列表接口
+      tags:
+      - User
+  /v1/user/update:
+    post:
+      consumes:
+      - application/json
+      description: User更新
+      parameters:
+      - description: User更新请求参数
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User更新返回结果
+          schema:
+            $ref: '#/definitions/response.UserUpdate'
+      summary: 更新接口
+      tags:
+      - User
 produces:
 - application/json
 schemes:
