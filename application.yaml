@@ -13,6 +13,8 @@ server:
   function_name: true
 swagger:
   enable: true
+pprof:
+  enable: true
 feiShu:
   enable: false
   url: "url"

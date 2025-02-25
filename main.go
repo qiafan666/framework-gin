@@ -6,6 +6,7 @@ import (
 	_ "framework-gin/docs"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/v2"
+	_ "net/http/pprof"
 )
 
 // @title framework API Document
