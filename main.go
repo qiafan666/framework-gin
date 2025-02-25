@@ -17,7 +17,7 @@ import (
 func main() {
 	server := v2.GetGotatoInstance()
 	server.RegisterErrorCodeAndMsg(gerr.MsgLanguageChinese, errs.ChineseCodeMsg())
-	server.StartServer(v2.GinService)
+	server.StartServer(v2.GinService, v2.DatabaseService)
 	controllers.RegisterRouter(server.App())
 	//ws.Register(server.App())
 	server.WaitClose()
