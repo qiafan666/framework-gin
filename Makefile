@@ -4,7 +4,8 @@ CUR_DIR := $(shell pwd)
 GENERATE_DIR := $(CUR_DIR)/tool/generateCURD
 # ws proto目录
 WS_PROTO_DIR := $(CUR_DIR)/ws/proto
-
+# goose mysql连接信息
+GOOSE_MYSQL_DSN := "root:admin123@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=True&loc=Local"
 # 检测操作系统类型
 UNAME_S := $(shell uname -s)
 
@@ -31,3 +32,16 @@ proto:
 	@echo "当前目录: $(CUR_DIR)"
 	@echo "ws proto目录: $(WS_PROTO_DIR)"
 	protoc -I=$(WS_PROTO_DIR) --go_out=$(WS_PROTO_DIR) $(WS_PROTO_DIR)/*.proto
+
+goose_create:
+	@goose -dir ./migrations -table goose_version create default sql
+goose_up:
+	@goose -dir ./migrations -table goose_version mysql $(GOOSE_MYSQL_DSN) up
+goose_one:
+	@goose -dir ./migrations -table goose_version mysql $(GOOSE_MYSQL_DSN) up-by-one
+goose_version:
+	@goose -dir ./migrations -table goose_version mysql $(GOOSE_MYSQL_DSN) version
+goose_status:
+	@goose -dir ./migrations -table goose_version mysql $(GOOSE_MYSQL_DSN) status
+goose_down:
+	@goose -dir ./migrations -table goose_version mysql $(GOOSE_MYSQL_DSN) down
