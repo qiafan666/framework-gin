@@ -41,7 +41,7 @@ type BaseModel struct {
 	UUID        string    `gorm:"column:uuid;type:varchar(50);not null;comment:UUID;uniqueIndex:uix_uuid"` // UUID
 	CreatedTime time.Time `gorm:"column:created_time;type:timestamp(3);not null;default:CURRENT_TIMESTAMP(3);comment:创建时间"`
 	UpdatedTime time.Time `gorm:"column:updated_time;type:timestamp(3);not null;default:CURRENT_TIMESTAMP(3) on update CURRENT_TIMESTAMP(3);comment:更新时间"`
-	IsDeleted   int8      `gorm:"column:is_deleted;type:tinyint(1);default:0;not null;comment:是否删除 0-未删除 1-已删除;index:idx_is_deleted"` // 是否删除 0-未删除 1-已删除
+	IsDeleted   int8      `gorm:"column:is_deleted;type:tinyint;default:0;not null;comment:是否删除 0-未删除 1-已删除;index:idx_is_deleted"` // 是否删除 0-未删除 1-已删除
 }
 
 // -------------------- 用户表 ----------------------

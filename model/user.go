@@ -8,16 +8,17 @@ import (
 CREATE TABLE `user` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `uuid` varchar(50) NOT NULL COMMENT 'UUID',
-  `created_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `updated_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  `created_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `updated_time` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间',
   `is_deleted` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除 0-未删除 1-已删除',
   `name` varchar(255) NOT NULL COMMENT '名称',
   `age` int NOT NULL COMMENT '年龄',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uix_uuid` (`uuid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  UNIQUE KEY `uix_uuid` (`uuid`),
+  KEY `idx_is_deleted` (`is_deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户表'
 ******sql******/
-// User [...]
+// User 用户表
 type User struct {
 	ID          int64     `gorm:"primaryKey;column:id" json:"-"` // 主键ID
 	UUID        string    `gorm:"column:uuid" json:"uuid"`       // UUID
