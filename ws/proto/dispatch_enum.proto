@@ -6,23 +6,33 @@ option go_package = "./pb;pb";
 enum Grp {
   Def = 0;
   Sys = 1;
-  Logic = 2;
+  Public = 2;
+  Private = 3;
 }
 
 enum CmdSys {
   DefCmdSys = 0;
-  SubscribeOnlineUser = 1;
-  KickOnlineUser = 2;
-  PushMessage = 3;
+  KickOnlineUser = 1;
 }
 
-enum CmdLogic {
-  DefCmdLogic = 0;
+enum CmdPublic {
+  DefCmdPublic = 0;
+  HealthCheck = 1;
+}
+
+enum CmdPrivate {
+  DefCmdPrivate = 0;
   Health = 1;
 }
 
-enum KickReason {
+
+enum TypeKickReason {
   DefKickReason = 0;
   // 只能一个端登录
   OnlyOneClient = 1;
+}
+
+enum TypeTickerSubscribe {
+  DefTickerSubscribe = 0;
+  Test = 1;
 }

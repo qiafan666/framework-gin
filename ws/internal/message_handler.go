@@ -1,13 +1,15 @@
 package internal
 
 import (
-	"framework-gin/common/function"
-	"github.com/golang/protobuf/proto"
+	"encoding/json"
+	"framework-gin/ws/constant"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gerr"
-	"github.com/qiafan666/gotato/commons/glog"
+	"google.golang.org/protobuf/proto"
 	"sync"
 )
+
+// -------------------- req and resp --------------------
 
 type Req struct {
 	RequestId string `json:"request_id"   validate:"required"`
@@ -45,9 +47,9 @@ func FreeReq(req *Req) {
 }
 
 type Resp struct {
-	GrpID     uint8  `json:"grp_id"`
-	CmdID     uint8  `json:"cmd_id"`
-	RequestID string `json:"request_id"`
+	GrpId     uint8  `json:"grp_id"`
+	CmdId     uint8  `json:"cmd_id"`
+	RequestId string `json:"request_id"`
 	Code      int    `json:"code"`
 	Msg       string `json:"msg"`
 	Data      []byte `json:"data"`
@@ -55,14 +57,37 @@ type Resp struct {
 
 func (r *Resp) String() string {
 	var tResp Resp
-	tResp.RequestID = r.RequestID
+	tResp.RequestId = r.RequestId
 	tResp.Code = r.Code
 	tResp.Msg = r.Msg
-	tResp.GrpID = r.GrpID
-	tResp.CmdID = r.CmdID
+	tResp.GrpId = r.GrpId
+	tResp.CmdId = r.CmdId
 	tResp.Data = r.Data
 	return gcast.ToString(tResp)
 }
+
+var respPool = sync.Pool{
+	New: func() any {
+		return new(Resp)
+	},
+}
+
+func GetResp() *Resp {
+	resp := respPool.Get().(*Resp)
+	resp.GrpId = 0
+	resp.CmdId = 0
+	resp.RequestId = ""
+	resp.Code = 0
+	resp.Msg = ""
+	resp.Data = nil
+	return resp
+}
+
+func FreeResp(resp *Resp) {
+	respPool.Put(resp)
+}
+
+// -------------------- msg handler --------------------
 
 var handler *MsgHandle
 
@@ -100,17 +125,27 @@ func (m *MsgHandle) DoMsgHandler(client *Client, req *Req) (proto.Message, int) 
 	msgID := genMsgID(req.GrpId, req.CmdId)
 	h, ok := m.Apis[msgID]
 	if !ok {
-		glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "DoMsgHandler", "msgID not found,MsgID", msgID)
+		client.logger.ErrorKVs(client.UserCtx.TraceCtx, "DoMsgHandler", "msgID not found,MsgID", msgID)
 		return nil, gerr.UnKnowError
 	}
 
 	// 解析pb消息
 	var dataReq proto.Message
-	if h.req != nil {
-		dataReq = proto.Clone(h.req)
-		if err := proto.Unmarshal(req.Data, dataReq); err != nil {
-			glog.Slog.ErrorKVs(client.UserCtx.TraceCtx, "DoMsgHandler", "unmarshal req pb msg err", err)
-			return nil, gerr.UnKnowError
+	if config.Ws.Protocol == constant.ProtocolJson {
+		if h.req != nil {
+			dataReq = proto.Clone(h.req)
+			if err := json.Unmarshal(req.Data, dataReq); err != nil {
+				client.logger.ErrorKVs(client.UserCtx.TraceCtx, "DoMsgHandler", "unmarshal req pb msg err", err)
+				return nil, gerr.UnKnowError
+			}
+		}
+	} else {
+		if h.req != nil {
+			dataReq = proto.Clone(h.req)
+			if err := proto.Unmarshal(req.Data, dataReq); err != nil {
+				client.logger.ErrorKVs(client.UserCtx.TraceCtx, "DoMsgHandler", "unmarshal req pb msg err", err)
+				return nil, gerr.UnKnowError
+			}
 		}
 	}
 
@@ -121,15 +156,12 @@ func (m *MsgHandle) DoMsgHandler(client *Client, req *Req) (proto.Message, int) 
 // AddHandler 为消息添加具体的处理逻辑
 func (m *MsgHandle) AddHandler(grp, cmd uint8, req, rsp proto.Message, f HandlerFunc) {
 	msgID := genMsgID(grp, cmd)
-	// 1 判断当前msgID绑定的处理方法是否已经存在
-	if _, ok := m.Apis[msgID]; ok {
-		glog.Slog.PanicF(function.WsCtx, "repeated handler", "grp", grp, "cmd", cmd)
-	}
-	// 2 添加msg与api的绑定关系
-	m.Apis[msgID] = &Handler{
-		f:   f,
-		req: req,
-		rsp: rsp,
+	if _, ok := m.Apis[msgID]; !ok {
+		m.Apis[msgID] = &Handler{
+			f:   f,
+			req: req,
+			rsp: rsp,
+		}
 	}
 }
 

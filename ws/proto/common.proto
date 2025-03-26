@@ -3,20 +3,8 @@ package pb;
 
 option go_package = "./pb;pb";
 
-// 解析token
+// 解析token 要么存在用户id，要么存在uuid
 message ParseToken{
-  string user_id = 1;
-}
-message InvalidateToken{
-}
-
-// 设置用户在线状态
-message SetUserOnlineStatusReq {
-  repeated UserOnlineStatus status = 1;
-}
-message UserOnlineStatus {
-  string user_id = 1;
-  string conn_id = 2;
-  repeated int32 online = 3;
-  repeated int32 offline = 4;
+  string user_id = 1; // 用户id
+  string uuid = 2;    // 唯一id
 }

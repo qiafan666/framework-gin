@@ -40,3 +40,9 @@ const (
 	OpUserPlatform = "platform"
 	RemoteAddr     = "remoteAddr"
 )
+
+// ws解析协议
+const (
+	ProtocolJson  = 1
+	ProtocolProto = 2
+)

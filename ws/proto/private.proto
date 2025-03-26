@@ -10,4 +10,3 @@ message ReqHealth {
 message RspHealth {
   string msg = 1;
 }
-

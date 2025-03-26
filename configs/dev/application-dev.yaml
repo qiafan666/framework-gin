@@ -12,8 +12,25 @@ dataSource:
     name: test
     type: mysql
     slow_sql: 100 #ms
+redis:
+  -
+    cluster_mode: false
+    address: ["127.0.0.1:6379"]
+    username:
+    password:
+    max_retry: 3
+    db: 0
+    pool_size:
+    name: test
 jwt:
   secret: 12345678
   expire: 30 #day
 ws:
-  multiLoginPolicy: 1
+  #登录策略：0-不踢人，1-所有端登录，同端踢人，2-只允许单端，5-pc可同时在线，其他只允许一个
+  mulit_login_policy: 1
+  #1-json,2-protobuf
+  protocol: 1
+  #token有userId的连接超时时间
+  private_live_time: 30
+  #token无userId的连接超时时间
+  public_live_time: 30

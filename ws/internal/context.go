@@ -3,17 +3,22 @@ package internal
 import (
 	"context"
 	"framework-gin/common"
-	"framework-gin/ws/constant"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/gid"
 	"net/http"
 	"strconv"
-	"time"
 )
 
+type BaseReq struct {
+	RequestId string
+	GrpId     uint8
+	CmdId     uint8
+}
+
 type UserConnContext struct {
+	BaseReq
 	RespWriter http.ResponseWriter
 	Req        *http.Request
 	Path       string
@@ -24,35 +29,10 @@ type UserConnContext struct {
 	PlatformID int
 	IsCompress bool
 	TraceCtx   context.Context
-}
-
-func (c *UserConnContext) Deadline() (deadline time.Time, ok bool) {
-	return
-}
-
-func (c *UserConnContext) Done() <-chan struct{} {
-	return nil
-}
-
-func (c *UserConnContext) Err() error {
-	return nil
-}
-
-func (c *UserConnContext) Value(key any) any {
-	switch key {
-	case constant.ConnID:
-		return c.GetConnID()
-	case constant.OpUserPlatform:
-		return constant.PlatformIDToName(gcast.ToInt(c.GetPlatformID()))
-	case constant.RemoteAddr:
-		return c.RemoteAddr
-	default:
-		return ""
-	}
+	Uuid       string
 }
 
 func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnContext {
-
 	x := &UserConnContext{
 		RespWriter: respWriter,
 		Req:        req,
@@ -61,6 +41,7 @@ func newContext(respWriter http.ResponseWriter, req *http.Request) *UserConnCont
 		RemoteAddr: gcommon.RemoteIP(req),
 		ConnID:     gcast.ToString(gid.RandID()),
 		PlatformID: gcast.ToInt(req.Header.Get(common.HeaderPlatformID)),
+		Uuid:       gcast.ToString(req.Header.Get(common.HeaderUUid)),
 	}
 	x.IsCompress = x.GetCompression()
 	x.Language = x.GetLanguage()
@@ -71,32 +52,12 @@ func (c *UserConnContext) GetRemoteAddr() string {
 	return c.RemoteAddr
 }
 
-func (c *UserConnContext) Query(key string) (string, bool) {
-	var value string
-	if value = c.Req.URL.Query().Get(key); value == "" {
-		return value, false
-	}
-	return value, true
-}
-
 func (c *UserConnContext) GetHeader(key string) (string, bool) {
 	var value string
 	if value = c.Req.Header.Get(key); value == "" {
 		return value, false
 	}
 	return value, true
-}
-
-func (c *UserConnContext) SetHeader(key, value string) {
-	c.RespWriter.Header().Set(key, value)
-}
-
-func (c *UserConnContext) ErrReturn(error string, code int) {
-	http.Error(c.RespWriter, error, code)
-}
-
-func (c *UserConnContext) GetConnID() string {
-	return c.ConnID
 }
 
 func (c *UserConnContext) GetLanguage() string {
@@ -109,14 +70,6 @@ func (c *UserConnContext) GetLanguage() string {
 		return gerr.DefaultLanguage
 	}
 	return headerLanguage
-}
-
-func (c *UserConnContext) GetPlatformID() int {
-	return gcast.ToInt(c.Req.Header.Get(common.HeaderPlatformID))
-}
-
-func (c *UserConnContext) GetToken() string {
-	return c.Req.Header.Get(common.HeaderAuthorization)
 }
 
 func (c *UserConnContext) GetCompression() bool {
@@ -140,15 +93,13 @@ func (c *UserConnContext) ShouldSendResp() bool {
 	return false
 }
 
-func (c *UserConnContext) SetToken(token string) {
-	c.Req.Header.Set(common.HeaderAuthorization, token)
-}
-
 func (c *UserConnContext) ParseEssentialArgs() error {
-	_, exists := c.GetHeader(common.HeaderAuthorization)
-	if !exists {
-		return gerr.NewLang(gerr.ParameterError, c.Language).WithDetail("auth token is empty")
+	authToken, _ := c.GetHeader(common.HeaderAuthorization)
+	uuid, _ := c.GetHeader(common.HeaderUUid)
+	if authToken == "" && uuid == "" {
+		return gerr.NewLang(gerr.ParameterError, c.Language).WithDetail("authToken and uuid are empty")
 	}
+
 	platformIDStr, exists := c.GetHeader(common.HeaderPlatformID)
 	if !exists {
 		return gerr.NewLang(gerr.ParameterError, c.Language).WithDetail("platformID is empty")
@@ -158,6 +109,11 @@ func (c *UserConnContext) ParseEssentialArgs() error {
 		return gerr.NewLang(gerr.ParameterError, c.Language).WithDetail("platformID is not a number")
 	}
 	return nil
+}
+
+// Trace append当前请求的trace信息到context中
+func (c *UserConnContext) Trace() context.Context {
+	return AppendTraceCtx(c.TraceCtx, c.BaseReq)
 }
 
 // ------------------------ ws logic context ------------------------
@@ -209,8 +165,8 @@ func GetCtxInfosE(ctx context.Context) (platform, connID, userID, requestID, rem
 }
 
 func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remoteAddr string) {
-	if requestId, ok := ctx.Value("request_id").(string); ok {
-		slice := gcommon.Str2Slice(requestId, "-")
+	if traceId, ok := ctx.Value("trace_id").(string); ok {
+		slice := gcommon.Str2Slice(traceId, "-")
 		return slice[0], slice[1], slice[2], slice[3], slice[4]
 	} else {
 		return "", "", "", "", ""
@@ -223,6 +179,7 @@ func SetTraceCtx(values []any) context.Context {
 }
 
 // AppendTraceCtx platform-connID-remoteAddr-userID-requestID-grp-cmd
-func AppendTraceCtx(ctx context.Context, values []any) context.Context {
-	return gcommon.SetRequestId(gcommon.GetRequestId(ctx) + "-" + gcommon.Slice2Str(values, "-"))
+func AppendTraceCtx(ctx context.Context, baseReq BaseReq) context.Context {
+	return gcommon.SetRequestId(gcommon.GetRequestId(ctx) + "-" +
+		gcommon.Slice2Str([]any{baseReq.RequestId, baseReq.GrpId, baseReq.CmdId}, "-"))
 }

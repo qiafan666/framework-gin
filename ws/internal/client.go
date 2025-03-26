@@ -2,85 +2,70 @@ package internal
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"framework-gin/ws/constant"
 	"framework-gin/ws/proto/pb"
-	"github.com/golang/protobuf/proto"
 	"github.com/qiafan666/gotato/commons/gerr"
-	"github.com/qiafan666/gotato/commons/glog"
+	"google.golang.org/protobuf/proto"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-var (
-	ErrConnClosed                = gerr.New("conn has closed")
-	ErrNotSupportMessageProtocol = gerr.New("not support message protocol")
-	ErrClientClosed              = gerr.New("client actively close the connection")
-	ErrPanic                     = gerr.New("panic error")
-)
-
-const (
-	// MessageText 表示 UTF-8 编码的文本消息，例如 JSON。
-	MessageText = iota + 1
-	// MessageBinary 表示二进制消息，例如 protobufs。
-	MessageBinary
-	// CloseMessage 表示关闭控制消息。可选消息负载包含一个数字代码和文本。
-	// 使用 FormatCloseMessage 函数格式化关闭消息负载。
-	CloseMessage = 8
-
-	// PingMessage 表示 ping 控制消息。可选消息负载为 UTF-8 编码文本。
-	PingMessage = 9
-
-	// PongMessage 表示 pong 控制消息。可选消息负载为 UTF-8 编码文本。
-	PongMessage = 10
-)
-
 type PingPongHandler func(string) error
 
 type Client struct {
-	w              *sync.Mutex
-	conn           LongConn
-	parseToken     *pb.ParseToken
-	UserCtx        *UserConnContext
-	LongConnServer LongConnServer
-	closed         atomic.Bool
-	closedErr      error
-	hbCtx          context.Context
-	hbCancel       context.CancelFunc
-	subLock        *sync.Mutex
-	subUserIDs     map[string]struct{} // 订阅用户ID集合
-	MsgHandle      *MsgHandle
+	lock       *sync.Mutex
+	conn       ConnInterface
+	server     ServerInterface
+	parseToken *pb.ParseToken
+	UserCtx    *UserConnContext
+	closed     atomic.Bool
+	closedErr  error
+	msgHandle  *MsgHandle
+	logger     *Logger
 }
 
 // ResetClient updates the client's state with new connection and context information.
-func (c *Client) ResetClient(ctx *UserConnContext, conn LongConn, longConnServer LongConnServer) {
-	c.w = new(sync.Mutex)
-	c.conn = conn
+func (c *Client) ResetClient(ctx *UserConnContext, connInterface ConnInterface, serverInterface ServerInterface) {
+	c.lock = new(sync.Mutex)
+	c.conn = connInterface
+	c.server = serverInterface
 	c.parseToken = &pb.ParseToken{}
 	c.UserCtx = ctx
-	c.LongConnServer = longConnServer
 	c.closed.Store(false)
 	c.closedErr = nil
-	c.hbCtx, c.hbCancel = context.WithCancel(c.UserCtx)
-	c.subLock = new(sync.Mutex)
-	if c.subUserIDs != nil {
-		clear(c.subUserIDs)
+	c.msgHandle = GetMsgHandler()
+}
+
+// GetClientState 获取当前连接是否为私有连接，true为私有连接，false为公共连接
+func (c *Client) GetClientState() bool {
+	if c.parseToken.UserId != "" {
+		return true
 	}
-	c.subUserIDs = make(map[string]struct{})
-	c.MsgHandle = GetMsgHandler()
+	return false
+}
+
+func (c *Client) GetClientLiveTime() time.Duration {
+	if c.GetClientState() {
+		return time.Duration(config.Ws.PrivateLiveTime) * time.Second
+	} else {
+		return time.Duration(config.Ws.PublicLiveTime) * time.Second
+	}
 }
 
 func (c *Client) pingHandler(appData string) error {
-	if err := c.conn.SetReadDeadline(pongWait); err != nil {
+	if err := c.conn.SetReadDeadline(c.GetClientLiveTime()); err != nil {
 		return err
 	}
 
-	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "pingHandler", "appData", appData)
+	c.logger.DebugKVs(c.UserCtx.Trace(), "pingHandler", "appData", appData)
 	return c.writePongMsg(appData)
 }
 
 func (c *Client) pongHandler(_ string) error {
-	if err := c.conn.SetReadDeadline(pongWait); err != nil {
+	if err := c.conn.SetReadDeadline(c.GetClientLiveTime()); err != nil {
 		return err
 	}
 	return nil
@@ -90,49 +75,51 @@ func (c *Client) pongHandler(_ string) error {
 func (c *Client) readMessage() {
 	defer func() {
 		if r := recover(); r != nil {
-			c.closedErr = ErrPanic
-			glog.Slog.PanicKVs(c.UserCtx.TraceCtx, "readMessage", "err", r)
+			c.closedErr = gerr.New("panic error")
+			c.logger.PanicKVs(c.UserCtx.Trace(), "readMessage", "err", r)
 		}
 		c.close()
 	}()
 
 	c.conn.SetReadLimit(maxMessageSize)
-	_ = c.conn.SetReadDeadline(pongWait)
+	_ = c.conn.SetReadDeadline(c.GetClientLiveTime())
 	c.conn.SetPongHandler(c.pongHandler)
 	c.conn.SetPingHandler(c.pingHandler)
-	c.activeHeartbeat()
+	//c.activeHeartbeat()
 
 	for {
 		messageType, message, returnErr := c.conn.ReadMessage()
 		if returnErr != nil {
-			glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "readMessage", "err", returnErr, "messageType", messageType)
+			c.logger.WarnKVs(c.UserCtx.Trace(), "readMessage", "err", returnErr, "messageType", messageType)
 			c.closedErr = returnErr
 			return
 		}
 
-		glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "readMessage", "messageType", messageType)
+		c.logger.DebugKVs(c.UserCtx.Trace(), "readMessage", "messageType", messageType)
 		if c.closed.Load() {
 			// 连接刚刚关闭，但协程尚未退出的情况
-			c.closedErr = ErrConnClosed
+			c.closedErr = gerr.New("conn has closed")
 			return
 		}
 
 		switch messageType {
-		case MessageBinary:
-			_ = c.conn.SetReadDeadline(pongWait)
+		case MessageBinary, MessageText:
+			_ = c.conn.SetReadDeadline(c.GetClientLiveTime())
 			parseDataErr := c.handleMessage(message)
 			if parseDataErr != nil {
 				c.closedErr = parseDataErr
 				return
 			}
-		case MessageText:
-			c.closedErr = ErrNotSupportMessageProtocol
-			return
+		//case MessageText:
+		//	c.closedErr = gerr.New("not support message protocol")
+		//	return
 		case PingMessage:
 			err := c.writePongMsg("")
-			glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "readMessage", "writePongMsg err", err)
+			if err != nil {
+				c.logger.ErrorKVs(c.UserCtx.Trace(), "readMessage", "writePongMsg err", err)
+			}
 		case CloseMessage:
-			c.closedErr = ErrClientClosed
+			c.closedErr = gerr.New("client actively close the connection")
 			return
 		default:
 		}
@@ -142,9 +129,15 @@ func (c *Client) readMessage() {
 // handleMessage 处理消息
 func (c *Client) handleMessage(message []byte) error {
 
-	if c.UserCtx.IsCompress {
+	if c.UserCtx.IsCompress && config.Ws.Protocol == constant.ProtocolJson {
+
 		var err error
-		message, err = c.LongConnServer.DecompressWithPool(message)
+		message, err = base64.StdEncoding.DecodeString(string(message))
+		if err != nil {
+			return err
+		}
+
+		message, err = c.server.DecompressWithPool(message)
 		if err != nil {
 			return gerr.Wrap(err)
 		}
@@ -153,100 +146,136 @@ func (c *Client) handleMessage(message []byte) error {
 	var binaryReq = GetReq()
 	defer FreeReq(binaryReq)
 
-	err := c.LongConnServer.Decode(message, binaryReq)
-	if err != nil {
-		glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "handleMessage", "decode error", err)
-		return err
+	if config.Ws.Protocol == constant.ProtocolJson {
+		err := json.Unmarshal(message, binaryReq)
+		if err != nil {
+			c.logger.ErrorKVs(c.UserCtx.Trace(), "handleMessage", "json unmarshal error", err)
+			return err
+		}
+	} else {
+		err := c.server.Decode(message, binaryReq)
+		if err != nil {
+			c.logger.ErrorKVs(c.UserCtx.Trace(), "handleMessage", "decode error", err)
+			return err
+		}
 	}
-	if err = c.LongConnServer.Validate(binaryReq); err != nil {
-		glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "handleMessage", "validate error", err)
+
+	if err := c.server.Validate(binaryReq); err != nil {
+		c.logger.ErrorKVs(c.UserCtx.Trace(), "handleMessage", "validate error", err)
 		return err
 	}
 
-	c.UserCtx.TraceCtx = AppendTraceCtx(c.UserCtx.TraceCtx, []any{binaryReq.RequestId, binaryReq.GrpId, binaryReq.CmdId})
+	c.UserCtx.BaseReq = BaseReq{
+		RequestId: binaryReq.RequestId,
+		GrpId:     binaryReq.GrpId,
+		CmdId:     binaryReq.CmdId,
+	}
 
-	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "handleMessage", "req", binaryReq.String())
 	startTime := time.Now()
-	data, code := c.MsgHandle.DoMsgHandler(c, binaryReq)
-	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "handleMessage DoMsgHandler", "data", data, "code", code, "time", time.Since(startTime))
+	data, code := c.msgHandle.DoMsgHandler(c, binaryReq)
+	if config.Ws.Protocol == constant.ProtocolJson {
+		c.logger.DebugKVs(c.UserCtx.Trace(), "handleMessage DoMsgHandler", "data", string(binaryReq.Data), "code", code, "time", time.Since(startTime).Milliseconds())
+	} else {
+		c.logger.DebugKVs(c.UserCtx.Trace(), "handleMessage DoMsgHandler", "data", data, "code", code, "time", time.Since(startTime).Milliseconds())
+	}
 
-	return c.replyMessage(c.UserCtx.TraceCtx, binaryReq, data, code)
+	return c.replyMessage(c.UserCtx.Trace(), binaryReq, data, code)
 }
 
 func (c *Client) close() {
-	c.w.Lock()
-	defer c.w.Unlock()
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	if c.closed.Load() {
 		return
 	}
 	c.closed.Store(true)
 	c.conn.Close()
-	c.hbCancel()
-	c.LongConnServer.UnRegister(c)
+	c.server.UnRegister(c)
+}
+
+func (c *Client) buildData(data proto.Message) ([]byte, error) {
+	if config.Ws.Protocol == constant.ProtocolJson {
+		return json.Marshal(data)
+	} else {
+		return c.server.Encode(data)
+	}
+}
+
+func (c *Client) buildResp(resp *Resp) ([]byte, error) {
+	if config.Ws.Protocol == constant.ProtocolJson {
+		return json.Marshal(resp)
+	} else {
+		return c.server.Encode(resp)
+	}
 }
 
 func (c *Client) replyMessage(ctx context.Context, binaryReq *Req, data proto.Message, code int) error {
-	mReply := Resp{
-		GrpID:     binaryReq.GrpId,
-		CmdID:     binaryReq.CmdId,
-		RequestID: binaryReq.RequestId,
-	}
+	reply := GetResp()
+	defer FreeResp(reply)
+
+	reply.GrpId = binaryReq.GrpId
+	reply.CmdId = binaryReq.CmdId
+	reply.RequestId = binaryReq.RequestId
 
 	if code == 0 {
-		marshal, err := proto.Marshal(data)
+		marshal, err := c.buildData(data)
 		if err != nil {
-			glog.Slog.ErrorKVs(ctx, "replyMessage", "marshal data error", err)
-			mReply.Code = gerr.UnKnowError
+			c.logger.ErrorKVs(ctx, "replyMessage", "marshal data error", err)
+			reply.Code = gerr.UnKnowError
 		} else {
-			mReply.Data = marshal
+			reply.Data = marshal
 		}
 	} else {
-		mReply.Code = code
-		mReply.Msg = gerr.GetLanguageMsg(code, c.UserCtx.Language)
+		reply.Code = code
+		reply.Msg = gerr.GetLanguageMsg(code, c.UserCtx.Language)
 	}
-	glog.Slog.DebugKVs(ctx, "replyMessage", "resp", mReply.String())
+	c.logger.DebugKVs(ctx, "replyMessage", "resp", reply.String())
 
-	err := c.writeBinaryMsg(mReply)
+	err := c.writeRespMsg(reply)
 	if err != nil {
-		glog.Slog.WarnKVs(ctx, "replyMessage", "writeBinaryMsg error", err, "resp", mReply.String())
+		c.logger.WarnKVs(ctx, "replyMessage", "writeBinaryMsg error", err, "resp", reply.String())
 	}
 	return nil
 }
 
-func (c *Client) writeBinaryMsg(resp Resp) error {
+func (c *Client) writeRespMsg(resp *Resp) error {
 	if c.closed.Load() {
 		return nil
 	}
 
-	encodedBuf, err := c.LongConnServer.Encode(resp)
+	if c.UserCtx.RequestId == resp.RequestId {
+		c.UserCtx.BaseReq = BaseReq{}
+	}
+
+	encodedBuf, err := c.buildResp(resp)
 	if err != nil {
 		return err
 	}
 
-	c.w.Lock()
-	defer c.w.Unlock()
+	c.lock.Lock()
+	defer c.lock.Unlock()
 
-	err = c.conn.SetWriteDeadline(writeWait)
+	err = c.conn.SetWriteDeadline(c.GetClientLiveTime())
 	if err != nil {
 		return err
 	}
 
-	if c.UserCtx.IsCompress {
-		resultBuf, compressErr := c.LongConnServer.CompressWithPool(encodedBuf)
+	if c.UserCtx.IsCompress && config.Ws.Protocol == constant.ProtocolJson {
+		resultBuf, compressErr := c.server.CompressWithPool(encodedBuf)
 		if compressErr != nil {
 			return compressErr
 		}
-		return c.conn.WriteMessage(MessageBinary, resultBuf)
+		return c.conn.WriteMessage(config.Ws.Protocol, []byte(base64.StdEncoding.EncodeToString(resultBuf)))
 	}
 
-	return c.conn.WriteMessage(MessageBinary, encodedBuf)
+	return c.conn.WriteMessage(config.Ws.Protocol, encodedBuf)
 }
 
 // 在Web平台上主动发起心跳
 func (c *Client) activeHeartbeat() {
 	if c.UserCtx.PlatformID == constant.WebPlatformID {
 		go func() {
-			glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "activeHeartbeat start.")
+			c.logger.DebugKVs(c.UserCtx.Trace(), "activeHeartbeat start.")
 			ticker := time.NewTicker(pingPeriod)
 			defer ticker.Stop()
 
@@ -254,11 +283,9 @@ func (c *Client) activeHeartbeat() {
 				select {
 				case <-ticker.C:
 					if err := c.writePingMsg(); err != nil {
-						glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "activeHeartbeat", "err", err)
+						c.logger.WarnKVs(c.UserCtx.Trace(), "activeHeartbeat", "err", err)
 						return
 					}
-				case <-c.hbCtx.Done():
-					return
 				}
 			}
 		}()
@@ -270,88 +297,85 @@ func (c *Client) writePingMsg() error {
 		return nil
 	}
 
-	c.w.Lock()
-	defer c.w.Unlock()
+	c.lock.Lock()
+	defer c.lock.Unlock()
 
-	err := c.conn.SetWriteDeadline(writeWait)
+	err := c.conn.SetWriteDeadline(c.GetClientLiveTime())
 	if err != nil {
 		return err
 	}
-	//glog.Slog.DebugKVs(c.userCtx.Ctx, "writePingMsg")
+	//c.logger.DebugKVs(c.userCtx.Ctx, "writePingMsg")
 	return c.conn.WriteMessage(PingMessage, nil)
 }
 
 func (c *Client) writePongMsg(appData string) error {
-	//glog.Slog.DebugKVs(c.userCtx.Ctx, "writePongMsg", "appData", appData)
+	c.logger.DebugKVs(c.UserCtx.Trace(), "writePongMsg", "appData", appData)
 	if c.closed.Load() {
-		glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "writePongMsg", "appdata", appData, "closed err", c.closedErr)
+		c.logger.WarnKVs(c.UserCtx.Trace(), "writePongMsg", "appdata", appData, "closed err", c.closedErr)
 		return nil
 	}
 
-	c.w.Lock()
-	defer c.w.Unlock()
+	c.lock.Lock()
+	defer c.lock.Unlock()
 
-	err := c.conn.SetWriteDeadline(writeWait)
+	err := c.conn.SetWriteDeadline(c.GetClientLiveTime())
 	if err != nil {
-		glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "writePongMsg", "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", writeWait, "appData", appData)
+		c.logger.WarnKVs(c.UserCtx.Trace(), "writePongMsg", "SetWriteDeadline in Server have error", gerr.Wrap(err), "writeWait", c.GetClientLiveTime(), "appData", appData)
 		return gerr.Wrap(err)
 	}
 	err = c.conn.WriteMessage(PongMessage, []byte(appData))
 	if err != nil {
-		glog.Slog.WarnKVs(c.UserCtx.TraceCtx, "writePongMsg", "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
+		c.logger.WarnKVs(c.UserCtx.Trace(), "writePongMsg", "WriteMessage in Server have error", gerr.Wrap(err), "Pong msg", PongMessage, "appData", appData)
+		return gerr.Wrap(err)
 	}
 
-	return gerr.Wrap(err)
+	return nil
 }
 
-// ------------------------ inner function ------------------------
-
-// PubMessage 推送消息,消息进入redis pub/sub,由redis订阅者进行处理
-func (c *Client) PubMessage(ctx context.Context, pubsub *pb.ReqPushMsgToOther) error {
-	return c.LongConnServer.PubMsgChannel(ctx, pubsub)
-}
-
-// PushMessage 服务器主动向客户端推送消息
-func (c *Client) PushMessage(req *pb.ReqPushMsgToOther) error {
-	resp := Resp{
-		GrpID: uint8(req.GrpId),
-		CmdID: uint8(req.CmdId),
-		Data:  req.Data,
-	}
-	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "PushMessage", "resp", resp.String())
-	err := c.writeBinaryMsg(resp)
-	c.close()
-	return err
-}
+// -------------------- inner function --------------------
 
 // KickOnlineMessage 踢下线 分布式使用
-func (c *Client) KickOnlineMessage(reason pb.KickReason) error {
+func (c *Client) KickOnlineMessage(reason pb.TypeKickReason) error {
 
-	pbRsp := &pb.RpcUserKickOff{
+	pbRsp := &pb.RspUserKickOff{
 		Reason: reason,
 	}
-	protoData, err := proto.Marshal(pbRsp)
+	data, err := c.buildData(pbRsp)
 	if err != nil {
-		glog.Slog.ErrorKVs(c.UserCtx.TraceCtx, "KickOnlineMessage", "marshal data error", err)
+		c.logger.ErrorKVs(c.UserCtx.Trace(), "KickOnlineMessage", "marshal data error", err)
 		return err
 	}
-	resp := Resp{
-		GrpID: uint8(pb.Grp_Sys),
-		CmdID: uint8(pb.CmdSys_KickOnlineUser),
-		Data:  protoData,
-	}
-	glog.Slog.DebugKVs(c.UserCtx.TraceCtx, "KickOnlineMessage", "resp", resp.String())
-	err = c.writeBinaryMsg(resp)
+	resp := GetResp()
+	defer FreeResp(resp)
+
+	resp.GrpId = uint8(pb.Grp_Sys)
+	resp.CmdId = uint8(pb.CmdSys_KickOnlineUser)
+	resp.Data = data
+
+	c.logger.DebugKVs(c.UserCtx.Trace(), "KickOnlineMessage", "resp", resp.String())
+	err = c.writeRespMsg(resp)
 	c.close()
 	return err
 }
 
-// PushUserOnlineStatus 推送用户在线状态
-func (c *Client) PushUserOnlineStatus(data []byte) error {
-	resp := Resp{
-		GrpID: uint8(pb.Grp_Sys),
-		CmdID: uint8(pb.CmdSys_SubscribeOnlineUser),
-		Data:  data,
+func (c *Client) SendTickerTestMsg() {
+
+	tickerMsg := &pb.RspTickerSubscribe{
+		Msg: "hello",
 	}
-	return c.writeBinaryMsg(resp)
+	data, err := c.buildData(tickerMsg)
+	if err != nil {
+		c.logger.ErrorKVs(c.UserCtx.Trace(), "SendTickerTestMsg", "build data error", err)
+		return
+	}
+
+	resp := GetResp()
+	defer FreeResp(resp)
+
+	resp.GrpId = uint8(pb.Grp_Public)
+	resp.CmdId = uint8(pb.CmdPublic_TickerSubscribe)
+	resp.Data = data
+
+	c.logger.DebugKVs(c.UserCtx.Trace(), "SendTickerTestMsg", "resp", resp.String())
+	_ = c.writeRespMsg(resp)
 }

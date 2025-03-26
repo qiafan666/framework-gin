@@ -21,6 +21,7 @@ const (
 // header value enum
 const (
 	HeaderAuthorization                 = "Authorization"
+	HeaderUUid                          = "UUid"
 	HeaderLanguage                      = "Language"
 	HeaderPlatformID                    = "PlatformID"
 	HeaderCompression                   = "Compression"

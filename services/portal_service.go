@@ -25,7 +25,7 @@ func NewPortalServiceInstance() PortalService {
 
 	portalServiceInitOnce.Do(func() {
 		portalServiceIns = &portalServiceImp{
-			dao: dao.Instance(),
+			dao: dao.New(),
 		}
 	})
 
@@ -33,7 +33,7 @@ func NewPortalServiceInstance() PortalService {
 }
 
 type portalServiceImp struct {
-	dao dao.Dao
+	dao dao.IDao
 }
 
 // ================================================================================
