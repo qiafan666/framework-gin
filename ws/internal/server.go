@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"framework-gin/common"
 	"framework-gin/common/errs"
 	"framework-gin/ws/constant"
@@ -25,6 +26,7 @@ type ServerInterface interface {
 }
 
 type Server struct {
+	ctx              context.Context //系统上下文
 	port             int
 	wsMaxConnNum     int64
 	registerChan     chan *Client
@@ -40,9 +42,10 @@ type Server struct {
 	gcommon.IEncoder
 }
 
-func NewWsServer() *Server {
+func NewWsServer(ctx context.Context) *Server {
 
 	server := &Server{
+		ctx:              ctx,
 		wsMaxConnNum:     100000,
 		writeBufferSize:  4096,
 		handshakeTimeout: 10 * time.Second,
@@ -83,6 +86,9 @@ func (s *Server) Run(r *gin.Engine) {
 				s.registerClient(client)
 			case client = <-s.unregisterChan:
 				s.unregisterClient(client)
+			case <-s.ctx.Done():
+				s.logger.InfoF(nil, "server run exit")
+				return
 			}
 		}
 	}()
@@ -160,7 +166,7 @@ func (s *Server) wsHandler(c *gin.Context) {
 
 	// 将客户端注册到服务器并开始消息处理
 	s.registerChan <- client
-	go client.readMessage()
+	go client.readMessage(s.ctx)
 }
 
 func (s *Server) ParseToken(userConCtx *UserConnContext) (*pb.ParseToken, error) {

@@ -21,6 +21,6 @@ func main() {
 	server.RegisterErrorCodeAndMsg(gerr.MsgLanguageChinese, errs.ChineseCodeMsg())
 	server.StartServer(v2.GinService, v2.DatabaseService, v2.RedisService)
 	controllers.RegisterRouter(server.App())
-	ws.Register(server.App())
+	ws.Register(server.GetCtx(), server.App())
 	server.WaitClose()
 }

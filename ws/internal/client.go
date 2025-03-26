@@ -72,7 +72,7 @@ func (c *Client) pongHandler(_ string) error {
 }
 
 // readMessage 读取消息
-func (c *Client) readMessage() {
+func (c *Client) readMessage(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
 			c.closedErr = gerr.New("panic error")
@@ -122,6 +122,12 @@ func (c *Client) readMessage() {
 			c.closedErr = gerr.New("client actively close the connection")
 			return
 		default:
+		}
+
+		select {
+		case <-ctx.Done():
+			c.closedErr = gerr.New("server exit, client exit")
+			return
 		}
 	}
 }
