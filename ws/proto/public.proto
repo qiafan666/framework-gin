@@ -2,7 +2,6 @@ syntax = "proto3";
 package pb;
 
 option go_package = "./pb;pb";
-import "dispatch_enum.proto";
 
 // grp:3 cmd:1 健康检查
 message ReqHealthCheck {

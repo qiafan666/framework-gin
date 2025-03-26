@@ -357,25 +357,3 @@ func (c *Client) KickOnlineMessage(reason pb.TypeKickReason) error {
 	c.close()
 	return err
 }
-
-func (c *Client) SendTickerTestMsg() {
-
-	tickerMsg := &pb.RspTickerSubscribe{
-		Msg: "hello",
-	}
-	data, err := c.buildData(tickerMsg)
-	if err != nil {
-		c.logger.ErrorKVs(c.UserCtx.Trace(), "SendTickerTestMsg", "build data error", err)
-		return
-	}
-
-	resp := GetResp()
-	defer FreeResp(resp)
-
-	resp.GrpId = uint8(pb.Grp_Public)
-	resp.CmdId = uint8(pb.CmdPublic_TickerSubscribe)
-	resp.Data = data
-
-	c.logger.DebugKVs(c.UserCtx.Trace(), "SendTickerTestMsg", "resp", resp.String())
-	_ = c.writeRespMsg(resp)
-}
