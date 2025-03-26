@@ -18,8 +18,3 @@ func (l PublicService) Health(client *internal.Client, info *pb.ReqHealth) (out 
 		Msg: "ok",
 	}, gerr.OK
 }
-
-func (l PublicService) TickerSubscribe(client *internal.Client, info *pb.ReqTickerSubscribe) (out *pb.RspTickerSubscribe, code int) {
-
-	return &pb.RspTickerSubscribe{}, gerr.OK
-}
