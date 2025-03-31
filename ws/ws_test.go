@@ -7,7 +7,6 @@ import (
 	"framework-gin/ws/proto/pb"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gcompress"
 	"log"
 	"net/http"
@@ -37,7 +36,7 @@ func TestEncode(t *testing.T) {
 		Data:      marshal,
 	}
 
-	gobEncoder := gcommon.NewGobEncoder()
+	gobEncoder := gcompress.NewGobEncoder()
 
 	encode, err := gobEncoder.Encode(req)
 	if err != nil {

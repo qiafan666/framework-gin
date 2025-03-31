@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"framework-gin/ws/proto/pb"
 	"github.com/golang/protobuf/proto"
-	"github.com/qiafan666/gotato/commons/gcommon"
+	"github.com/qiafan666/gotato/commons/gcompress"
 	"testing"
 )
 
@@ -29,7 +29,7 @@ func TestEncode(t *testing.T) {
 		Data:      marshal,
 	}
 
-	gobEncoder := gcommon.NewGobEncoder()
+	gobEncoder := gcompress.NewGobEncoder()
 
 	encode, err := gobEncoder.Encode(req)
 	if err != nil {

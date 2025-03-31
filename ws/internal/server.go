@@ -22,7 +22,7 @@ type ServerInterface interface {
 	Validate(s any) error
 	UnRegister(c *Client)
 	gcompress.ICompressor
-	gcommon.IEncoder
+	gcompress.IEncoder
 }
 
 type Server struct {
@@ -39,7 +39,7 @@ type Server struct {
 	writeBufferSize  int
 	logger           *Logger
 	gcompress.ICompressor
-	gcommon.IEncoder
+	gcompress.IEncoder
 }
 
 func NewWsServer(ctx context.Context) *Server {
@@ -58,7 +58,7 @@ func NewWsServer(ctx context.Context) *Server {
 		unregisterChan: make(chan *Client, 1000),
 		clients:        newClientManager(32),
 		ICompressor:    gcompress.NewGzipCompressor(),
-		IEncoder:       gcommon.NewGobEncoder(),
+		IEncoder:       gcompress.NewGobEncoder(),
 		logger:         NewLogger("ws", glog.ZapLog),
 	}
 	return server
