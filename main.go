@@ -17,7 +17,7 @@ import (
 // @produce json
 // @consumes json
 func main() {
-	server := v2.GetGotatoInstance()
+	server := v2.GetGotato()
 	server.ReadConfig()
 	server.RegisterErrorCodeAndMsg(gerr.MsgLanguageChinese, errs.ChineseCodeMsg())
 	server.StartServer(v2.GinService, v2.DatabaseService, v2.RedisService)

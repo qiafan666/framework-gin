@@ -35,7 +35,7 @@ var once sync.Once
 
 func New() IDao {
 	once.Do(func() {
-		db = v2.GetGotatoInstance().FeatureDB("test").GormDB()
+		db = v2.GetGotato().FeatureDB("test").GormDB()
 	})
 
 	//默认is_deleted=0条件

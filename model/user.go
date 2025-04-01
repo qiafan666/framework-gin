@@ -20,13 +20,13 @@ CREATE TABLE `user` (
 ******sql******/
 // User 用户表
 type User struct {
-	ID          int64     `gorm:"primaryKey;column:id" json:"-"` // 主键ID
-	UUID        string    `gorm:"column:uuid" json:"uuid"`       // UUID
-	CreatedTime time.Time `gorm:"column:created_time" json:"created_time"`
-	UpdatedTime time.Time `gorm:"column:updated_time" json:"updated_time"`
-	IsDeleted   int8      `gorm:"column:is_deleted" json:"is_deleted"` // 是否删除 0-未删除 1-已删除
-	Name        string    `gorm:"column:name" json:"name"`             // 名称
-	Age         int       `gorm:"column:age" json:"age"`               // 年龄
+	ID          int64     `gorm:"primaryKey;column:id" json:"-"`           // 主键ID
+	UUID        string    `gorm:"column:uuid" json:"uuid"`                 // UUID
+	CreatedTime time.Time `gorm:"column:created_time" json:"created_time"` // 创建时间
+	UpdatedTime time.Time `gorm:"column:updated_time" json:"updated_time"` // 更新时间
+	IsDeleted   int8      `gorm:"column:is_deleted" json:"is_deleted"`     // 是否删除 0-未删除 1-已删除
+	Name        string    `gorm:"column:name" json:"name"`                 // 名称
+	Age         int       `gorm:"column:age" json:"age"`                   // 年龄
 }
 
 // TableName get sql table name.获取数据库表名

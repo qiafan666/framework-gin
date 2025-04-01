@@ -8,14 +8,14 @@ import (
 	"github.com/qiafan666/gotato/commons/ggin"
 )
 
+type PortalController struct {
+	portalService services.IPortalService
+}
+
 func NewPortalController() *PortalController {
 	return &PortalController{
 		portalService: services.NewPortalServiceInstance(),
 	}
-}
-
-type PortalController struct {
-	portalService services.IPortalService
 }
 
 // ================================================================================

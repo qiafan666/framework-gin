@@ -21,7 +21,7 @@ var jwtConfig struct {
 }
 
 func init() {
-	v2.GetGotatoInstance().LoadCustomizeConfig(&jwtConfig)
+	v2.GetGotato().LoadCustomCfg(&jwtConfig)
 }
 
 var witheList = map[string]string{

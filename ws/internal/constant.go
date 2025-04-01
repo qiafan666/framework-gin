@@ -15,7 +15,7 @@ var config struct {
 }
 
 func init() {
-	v2.GetGotatoInstance().LoadCustomizeConfig(&config)
+	v2.GetGotato().LoadCustomCfg(&config)
 }
 
 const (

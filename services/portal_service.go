@@ -7,6 +7,8 @@ import (
 	"framework-gin/pojo/response"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"github.com/qiafan666/gotato/commons/glog"
+	"github.com/qiafan666/gotato/commons/gredis"
+	v2 "github.com/qiafan666/gotato/v2"
 )
 
 // IPortalService service layer interface
@@ -17,12 +19,16 @@ type IPortalService interface {
 	UserList(info request.UserList) (out response.UserList, err error)
 }
 
-func NewPortalServiceInstance() IPortalService {
-	return &portalService{dao: dao.New()}
+type portalService struct {
+	dao   dao.IDao
+	redis *gredis.Client
 }
 
-type portalService struct {
-	dao dao.IDao
+func NewPortalServiceInstance() IPortalService {
+	return &portalService{
+		dao:   dao.New(),
+		redis: gredis.SetRedis(v2.GetGotato().Redis("test")),
+	}
 }
 
 // ================================================================================
