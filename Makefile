@@ -11,11 +11,11 @@ UNAME_S := $(shell uname -s)
 
 # 根据操作系统选择不同的可执行文件
 ifeq ($(UNAME_S), Darwin)
-    EXECUTABLE := $(GENERATE_DIR)/main
+    EXECUTABLE := $(GENERATE_DIR)/gormt
 else ifeq ($(UNAME_S), Linux)
-    EXECUTABLE := $(GENERATE_DIR)/main
+    EXECUTABLE := $(GENERATE_DIR)/gormt
 else ifeq ($(UNAME_S), Windows_NT)
-    EXECUTABLE := $(GENERATE_DIR)/main.exe
+    EXECUTABLE := $(GENERATE_DIR)/gormt.exe
 endif
 
 # 根据数据库表生成CURD代码

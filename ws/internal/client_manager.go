@@ -4,7 +4,7 @@ import (
 	"github.com/qiafan666/gotato/commons/gcache"
 )
 
-type clientManagerInterface interface {
+type IClientManager interface {
 	Set(v *Client)
 	GetOldClients(v *Client) ([]*Client, bool, bool)
 	DeleteClients(clients []*Client) bool
@@ -12,7 +12,7 @@ type clientManagerInterface interface {
 	GetAllStatefulConnections() *gcache.ShardLockMap[string, []*Client]
 }
 
-func newClientManager(numShards int) clientManagerInterface {
+func newClientManager(numShards int) IClientManager {
 	return &clientManager{
 		statelessConnections: gcache.NewShardLockMap[[]*Client](numShards),
 		statefulConnections:  gcache.NewShardLockMap[[]*Client](numShards),

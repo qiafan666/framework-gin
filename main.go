@@ -18,6 +18,7 @@ import (
 // @consumes json
 func main() {
 	server := v2.GetGotatoInstance()
+	server.ReadConfig()
 	server.RegisterErrorCodeAndMsg(gerr.MsgLanguageChinese, errs.ChineseCodeMsg())
 	server.StartServer(v2.GinService, v2.DatabaseService, v2.RedisService)
 	controllers.RegisterRouter(server.App())

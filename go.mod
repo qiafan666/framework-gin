@@ -6,9 +6,8 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gogo/protobuf v1.3.2
-	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/websocket v1.5.3
-	github.com/qiafan666/gotato v1.1.85
+	github.com/qiafan666/gotato v1.1.87
 	github.com/swaggo/swag v1.16.3
 	go.uber.org/zap v1.25.0
 	google.golang.org/protobuf v1.35.2

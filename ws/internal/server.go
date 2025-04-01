@@ -31,7 +31,7 @@ type Server struct {
 	wsMaxConnNum     int64
 	registerChan     chan *Client
 	unregisterChan   chan *Client
-	clients          clientManagerInterface
+	iclients         IClientManager
 	clientPool       sync.Pool
 	statelessConnNum atomic.Int64
 	statefulConnNum  atomic.Int64
@@ -56,7 +56,7 @@ func NewWsServer(ctx context.Context) *Server {
 		},
 		registerChan:   make(chan *Client, 1000),
 		unregisterChan: make(chan *Client, 1000),
-		clients:        newClientManager(32),
+		iclients:       newClientManager(32),
 		ICompressor:    gcompress.NewGzipCompressor(),
 		IEncoder:       gcompress.NewGobEncoder(),
 		logger:         NewLogger("ws", glog.ZapLog),
@@ -184,7 +184,7 @@ func (s *Server) registerClient(client *Client) {
 		oldClients []*Client
 		state      bool // 是否状态连接 true:有状态连接 false:无状态连接
 	)
-	oldClients, clientOK, state = s.clients.GetOldClients(client)
+	oldClients, clientOK, state = s.iclients.GetOldClients(client)
 	if len(oldClients) == 0 {
 		s.logger.DebugKVs(client.UserCtx.TraceCtx, "registerClient,user not exist", "userID", client.parseToken.UserId, "uuid", client.parseToken.Uuid, "platformID", client.UserCtx.PlatformID)
 	} else {
@@ -196,7 +196,7 @@ func (s *Server) registerClient(client *Client) {
 				client.UserCtx.PlatformID, "old remote addr", s.getRemoteAdders(oldClients))
 		}
 	}
-	s.clients.Set(client)
+	s.iclients.Set(client)
 	if state {
 		s.statefulConnNum.Add(1)
 	} else {
@@ -249,7 +249,7 @@ func (s *Server) getRemoteAdders(client []*Client) string {
 
 func (s *Server) unregisterClient(client *Client) {
 	defer s.clientPool.Put(client)
-	isDeleteUser := s.clients.DeleteClients([]*Client{client})
+	isDeleteUser := s.iclients.DeleteClients([]*Client{client})
 
 	if isDeleteUser {
 		if client.GetClientState() {

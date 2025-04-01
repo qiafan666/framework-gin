@@ -14,7 +14,7 @@ func RegisterRouter(r *gin.Engine) {
 	rootGroup := r.Group("v1")
 
 	//注册controller
-	portalController := NewPortalControllerInstance()
+	portalController := NewPortalController()
 
 	portalGroup := rootGroup.Group("portal")
 	{

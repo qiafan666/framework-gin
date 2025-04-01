@@ -6,23 +6,16 @@ import (
 	"framework-gin/services"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons/ggin"
-	"sync"
 )
 
-var portalControllerIns *PortalControllerImp
-var portalControllerInitOnce sync.Once
-
-func NewPortalControllerInstance() *PortalControllerImp {
-	portalControllerInitOnce.Do(func() {
-		portalControllerIns = &PortalControllerImp{
-			portalService: services.NewPortalServiceInstance(),
-		}
-	})
-	return portalControllerIns
+func NewPortalController() *PortalController {
+	return &PortalController{
+		portalService: services.NewPortalServiceInstance(),
+	}
 }
 
-type PortalControllerImp struct {
-	portalService services.PortalService
+type PortalController struct {
+	portalService services.IPortalService
 }
 
 // ================================================================================
@@ -38,12 +31,12 @@ type PortalControllerImp struct {
 // @Router /v1/user/create [post]
 // @param data body request.UserCreate true "User创建请求参数"
 // @Success 200 {object} response.UserCreate "User创建返回结果"
-func (g *PortalControllerImp) UserCreate(c *gin.Context) {
+func (p *PortalController) UserCreate(c *gin.Context) {
 	input := request.UserCreate{}
 	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
 		ggin.GinError(c, bindErr)
 	} else {
-		if out, err := g.portalService.UserCreate(input); err != nil {
+		if out, err := p.portalService.UserCreate(input); err != nil {
 			ggin.GinError(c, err)
 		} else {
 			ggin.GinSuccess(c, out)
@@ -60,12 +53,12 @@ func (g *PortalControllerImp) UserCreate(c *gin.Context) {
 // @Router /v1/user/delete [post]
 // @param data body request.UserDelete true "User删除请求参数"
 // @Success 200 {object} response.UserDelete "User删除返回结果"
-func (g *PortalControllerImp) UserDelete(c *gin.Context) {
+func (p *PortalController) UserDelete(c *gin.Context) {
 	input := request.UserDelete{}
 	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
 		ggin.GinError(c, bindErr)
 	} else {
-		if out, err := g.portalService.UserDelete(input); err != nil {
+		if out, err := p.portalService.UserDelete(input); err != nil {
 			ggin.GinError(c, err)
 		} else {
 			ggin.GinSuccess(c, out)
@@ -82,12 +75,12 @@ func (g *PortalControllerImp) UserDelete(c *gin.Context) {
 // @Router /v1/user/update [post]
 // @param data body request.UserUpdate true "User更新请求参数"
 // @Success 200 {object} response.UserUpdate "User更新返回结果"
-func (g *PortalControllerImp) UserUpdate(c *gin.Context) {
+func (p *PortalController) UserUpdate(c *gin.Context) {
 	input := request.UserUpdate{}
 	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
 		ggin.GinError(c, bindErr)
 	} else {
-		if out, err := g.portalService.UserUpdate(input); err != nil {
+		if out, err := p.portalService.UserUpdate(input); err != nil {
 			ggin.GinError(c, err)
 		} else {
 			ggin.GinSuccess(c, out)
@@ -104,12 +97,12 @@ func (g *PortalControllerImp) UserUpdate(c *gin.Context) {
 // @Router /v1/user/list [post]
 // @param data body request.UserList true "User列表请求参数"
 // @Success 200 {object} response.UserList "User列表返回结果"
-func (g *PortalControllerImp) UserList(c *gin.Context) {
+func (p *PortalController) UserList(c *gin.Context) {
 	input := request.UserList{}
 	if bindErr := function.BindAndValid(&input, c); bindErr != nil {
 		ggin.GinError(c, bindErr)
 	} else {
-		if out, err := g.portalService.UserList(input); err != nil {
+		if out, err := p.portalService.UserList(input); err != nil {
 			ggin.GinError(c, err)
 		} else {
 			ggin.GinSuccess(c, out)
