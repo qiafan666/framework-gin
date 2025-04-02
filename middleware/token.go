@@ -6,10 +6,9 @@ import (
 	"framework-gin/pojo/request"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"github.com/qiafan666/gotato/commons"
+	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gerr"
-	"github.com/qiafan666/gotato/v2"
-	"net/http"
+	"github.com/qiafan666/gotato/commons/ggin"
 	"time"
 )
 
@@ -21,7 +20,7 @@ var jwtConfig struct {
 }
 
 func init() {
-	v2.GetGotato().LoadCustomCfg(&jwtConfig)
+	gotato.GetGotato().LoadCustomCfg(&jwtConfig)
 }
 
 var witheList = map[string]string{
@@ -42,7 +41,7 @@ func CheckToken(ctx *gin.Context) {
 		//check jwt
 		resultMap, err := ParseToken(ctx.Request.Header.Get(common.HeaderAuthorization))
 		if err != nil || len(resultMap) == 0 {
-			ctx.JSON(http.StatusOK, commons.BuildFailed(gerr.TokenError, language, requestId))
+			ggin.GinError(ctx, gerr.NewLang(gerr.TokenError, language, requestId))
 			ctx.Abort()
 			return
 		}

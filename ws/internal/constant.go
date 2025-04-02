@@ -1,7 +1,7 @@
 package internal
 
 import (
-	v2 "github.com/qiafan666/gotato/v2"
+	"github.com/qiafan666/gotato"
 	"time"
 )
 
@@ -15,7 +15,7 @@ var config struct {
 }
 
 func init() {
-	v2.GetGotato().LoadCustomCfg(&config)
+	gotato.GetGotato().LoadCustomCfg(&config)
 }
 
 const (

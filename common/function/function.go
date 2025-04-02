@@ -44,13 +44,3 @@ func BindAndValid(entity interface{}, ctx *gin.Context) error {
 
 	return nil
 }
-
-func GetCtx(ctx *gin.Context) context.Context {
-	if v, ok := ctx.Value("ctx").(context.Context); ok {
-		return v
-	} else {
-		return context.Background()
-	}
-}
-
-var WsCtx = context.WithValue(context.Background(), "trace_id", "ws_server")

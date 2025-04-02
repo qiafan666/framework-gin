@@ -165,7 +165,7 @@ func GetCtxInfosE(ctx context.Context) (platform, connID, userID, requestID, rem
 }
 
 func GetCtxInfos(ctx context.Context) (platform, connID, userID, requestID, remoteAddr string) {
-	if traceId, ok := ctx.Value("trace_id").(string); ok {
+	if traceId, ok := ctx.Value("request_id").(string); ok {
 		slice := gcommon.Str2Slice(traceId, "-")
 		return slice[0], slice[1], slice[2], slice[3], slice[4]
 	} else {

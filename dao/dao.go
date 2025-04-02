@@ -2,8 +2,8 @@ package dao
 
 import (
 	"context"
+	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gcommon"
-	v2 "github.com/qiafan666/gotato/v2"
 	"gorm.io/gorm"
 	"sync"
 )
@@ -17,8 +17,7 @@ type IDao interface {
 	Create(interface{}) error
 	First([]string, map[string]interface{}, func(*gorm.DB) *gorm.DB, interface{}) error
 	Find([]string, map[string]interface{}, func(*gorm.DB) *gorm.DB, interface{}) error
-	Update(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
-	UpdateMap(map[string]interface{}, string, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
+	Update(interface{}, string, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Delete(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Count(interface{}, map[string]interface{}, func(*gorm.DB) *gorm.DB) (int64, error)
 	Save(interface{}) error
@@ -35,7 +34,7 @@ var once sync.Once
 
 func New() IDao {
 	once.Do(func() {
-		db = v2.GetGotato().FeatureDB("test").GormDB()
+		db = gotato.GetGotato().FeatureDB("test").GormDB()
 	})
 
 	//默认is_deleted=0条件
@@ -85,7 +84,7 @@ func (i imp) Find(selectStr []string, where map[string]interface{}, scope func(*
 
 	return i.db.Model(output).Where(where).Find(output).Error
 }
-func (i imp) Update(info interface{}, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB) (rows int64, err error) {
+func (i imp) Update(info interface{}, table string, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB) (rows int64, err error) {
 
 	if len(i.defaultWhere) > 0 {
 		where = gcommon.MapMergeUnique(where, i.defaultWhere)
@@ -93,33 +92,17 @@ func (i imp) Update(info interface{}, where map[string]interface{}, scope func(*
 	if scope != nil {
 		i.db = i.db.Scopes(scope)
 	}
-	updateTx := i.db.Model(info).Where(where).Updates(info)
+	var updateTx *gorm.DB
+	if table != "" {
+		updateTx = i.db.Table(table).Where(where).Updates(info)
+	} else {
+		updateTx = i.db.Model(info).Where(where).Updates(info)
+	}
 	err = updateTx.Error
 	rows = updateTx.RowsAffected
 	return
 }
 
-// UpdateMap 更新map结构体
-// info 要更新的结构体
-// table 要更新的表名
-// where 更新条件
-// scope 事务作用域
-// jumpStrings 跳过结构体中的字段名
-func (i imp) UpdateMap(info map[string]interface{}, table string, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB) (rows int64, err error) {
-
-	if len(i.defaultWhere) > 0 {
-		where = gcommon.MapMergeUnique(where, i.defaultWhere)
-	}
-	if scope != nil {
-		i.db = i.db.Scopes(scope)
-	}
-
-	updateTx := i.db.Table(table).Where(where).Updates(info)
-
-	err = updateTx.Error
-	rows = updateTx.RowsAffected
-	return
-}
 func (i imp) Count(entity interface{}, where map[string]interface{}, scope func(*gorm.DB) *gorm.DB) (total int64, err error) {
 
 	if len(i.defaultWhere) > 0 {

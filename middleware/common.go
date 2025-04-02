@@ -4,9 +4,9 @@ import (
 	"framework-gin/common"
 	"framework-gin/pojo/request"
 	"github.com/gin-gonic/gin"
+	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gerr"
-	"github.com/qiafan666/gotato/v2/middleware"
 	"net/http"
 	"sync"
 )
@@ -22,7 +22,7 @@ var once sync.Once
 
 func init() {
 	once.Do(func() {
-		middleware.RegisterIgnoreRequest(blackList...)
+		gotato.GetGotato().RegisterIgnoreRequest(blackList...)
 	})
 }
 
