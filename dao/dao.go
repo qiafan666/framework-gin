@@ -5,7 +5,6 @@ import (
 	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"gorm.io/gorm"
-	"sync"
 )
 
 type IDao interface {
@@ -29,18 +28,14 @@ type imp struct {
 	defaultWhere map[string]interface{}
 }
 
-var db *gorm.DB
-var once sync.Once
-
 func New() IDao {
-	once.Do(func() {
-		db = gotato.GetGotato().FeatureDB("test").GormDB()
-	})
-
 	//默认is_deleted=0条件
 	defaultWhere := map[string]interface{}{}
 
-	return &imp{db: db, defaultWhere: defaultWhere}
+	return &imp{
+		db:           gotato.GetGotato().FeatureDB("test").GormDB(),
+		defaultWhere: defaultWhere,
+	}
 }
 
 func (i imp) Db() *gorm.DB {

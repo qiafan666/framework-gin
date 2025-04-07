@@ -1,6 +1,7 @@
-package ws
+package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
 	"github.com/qiafan666/gotato/commons/gcompress"
+	"github.com/qiafan666/gotato/commons/gticker"
+	"io"
 	"log"
 	"net/http"
 	"sync"
@@ -91,7 +94,7 @@ func TestJson(t *testing.T) {
 
 func TestWsPing(t *testing.T) {
 	// WebSocket 服务器地址
-	url := "ws://localhost:8080/ws"
+	url := "ws://localhost:8081/ws"
 	header := http.Header{}
 	header.Set("UUID", "sdfgadf")
 	header.Set("PlatformID", "5")
@@ -103,40 +106,37 @@ func TestWsPing(t *testing.T) {
 	}
 	defer conn.Close()
 
-	// 设置一个定时任务，每隔 5 秒发送一次 ping 消息
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
+	// 设置 Pong 处理器
+	conn.SetPongHandler(func(appData string) error {
+		fmt.Println("Received pong:", appData)
+		return nil
+	})
 
 	go func() {
 		for {
-			select {
-			case <-ticker.C:
-				// 发送 ping 消息
-				if err := conn.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
-					log.Println("Error sending ping:", err)
-					return
-				}
-				fmt.Println("Sent ping")
+			messageType, message, err := conn.ReadMessage()
+			if err != nil {
+				log.Println("Read error:", err)
+				return
+			}
+
+			switch messageType {
+			case websocket.TextMessage:
+				fmt.Println("Received text:", string(message))
+			default:
+				fmt.Println("Received message:", messageType, string(message))
 			}
 		}
 	}()
 
-	for {
-		messageType, message, err := conn.ReadMessage()
-		if err != nil {
-			log.Println("Read error:", err)
+	// 设置一个定时任务，每隔 5 秒发送一次 ping 消息
+	gticker.NewTicker(5*time.Second, func() {
+		if err = conn.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
+			log.Println("Error sending ping:", err)
 			return
 		}
-
-		switch messageType {
-		case websocket.PongMessage:
-			fmt.Println("Received pong:", string(message))
-		case websocket.TextMessage:
-			fmt.Println("Received text:", string(message))
-		default:
-			fmt.Println("Received message:", messageType, string(message))
-		}
-	}
+		fmt.Println("Sent ping")
+	}).Run(context.Background())
 }
 
 func TestSuperConn(t *testing.T) {
@@ -162,6 +162,23 @@ func TestSuperConn(t *testing.T) {
 	// 等待所有连接完成
 	wg.Wait()
 }
+
+func TestRequest(t *testing.T) {
+	url := "ws://localhost:8081/ws"
+	header := http.Header{}
+	dial, h, err := websocket.DefaultDialer.Dial(url, header)
+	if err != nil {
+		log.Println("Dial error:", err)
+		return
+	}
+	defer dial.Close()
+	all, err := io.ReadAll(h.Body)
+	if err != nil {
+		return
+	}
+	fmt.Println(string(all))
+}
+
 func connectWebSocket(id int, wg *sync.WaitGroup) {
 	defer wg.Done()
 

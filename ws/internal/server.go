@@ -92,7 +92,7 @@ func (s *Server) Run(r *gin.Engine) {
 			}
 		}
 	}()
-	r.GET("/stream", s.wsHandler)
+	r.GET("/ws", s.wsHandler)
 }
 
 func (s *Server) wsHandler(c *gin.Context) {

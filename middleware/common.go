@@ -8,22 +8,16 @@ import (
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"net/http"
-	"sync"
 )
 
 // 拉黑的url不会被记录到日志中
 var blackList = []string{
 	"/favicon.ico",
-	"/ws",
 	"/health",
 }
 
-var once sync.Once
-
 func init() {
-	once.Do(func() {
-		gotato.GetGotato().RegisterIgnoreRequest(blackList...)
-	})
+	gotato.GetGotato().RegisterIgnoreRequest(blackList...)
 }
 
 func Common(ctx *gin.Context) {

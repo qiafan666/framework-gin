@@ -18,7 +18,6 @@ import (
 // @consumes json
 func main() {
 	server := gotato.GetGotato()
-	server.ReadConfig()
 	server.RegisterErrorCodeAndMsg(gerr.MsgLanguageChinese, errs.ChineseCodeMsg())
 	server.StartServer(gotato.GinService, gotato.DatabaseService, gotato.RedisService)
 	controllers.RegisterRouter(server.App())
