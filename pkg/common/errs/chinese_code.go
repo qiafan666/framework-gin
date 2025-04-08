@@ -6,7 +6,7 @@ func ChineseCodeMsg() map[int]string {
 	return gcommon.MapMerge(ChineseHttpCodeMsg, ChineseWsCodeMsg)
 }
 
-// http error
+// -------------------- http error --------------------
 
 const (
 	BusinessError = 10000 // 业务错误
@@ -17,7 +17,7 @@ var ChineseHttpCodeMsg = map[int]string{
 	10000: "业务错误",
 }
 
-// ws error
+// -------------------- ws error --------------------
 
 const (
 	ConnOverMaxNumLimit = 20001 // 超过最大连接数限制

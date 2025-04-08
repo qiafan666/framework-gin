@@ -2,7 +2,7 @@ package function
 
 import (
 	"context"
-	"framework-gin/common"
+	"framework-gin/pkg/common"
 	"framework-gin/pojo/request"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"

@@ -2,7 +2,7 @@ package internal
 
 import (
 	"encoding/json"
-	"framework-gin/ws/constant"
+	"framework-gin/internal/ws/constant"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"google.golang.org/protobuf/proto"

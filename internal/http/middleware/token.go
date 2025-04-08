@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"errors"
-	"framework-gin/common"
+	"framework-gin/pkg/common"
 	"framework-gin/pojo/request"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"

@@ -1,8 +1,8 @@
 package services
 
 import (
-	"framework-gin/common/errs"
-	"framework-gin/dao"
+	"framework-gin/lib/dao"
+	"framework-gin/pkg/common/errs"
 	"framework-gin/pojo/request"
 	"framework-gin/pojo/response"
 	"github.com/qiafan666/gotato"
@@ -24,7 +24,7 @@ type portalService struct {
 	redis *gredis.Client
 }
 
-func NewPortalServiceInstance() IPortalService {
+func NewPortalService() IPortalService {
 	return &portalService{
 		dao:   dao.New(),
 		redis: gredis.SetRedis(gotato.GetGotato().Redis("test")),

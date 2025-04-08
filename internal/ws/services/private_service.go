@@ -1,8 +1,8 @@
 package services
 
 import (
-	"framework-gin/ws/internal"
-	"framework-gin/ws/proto/pb"
+	"framework-gin/internal/ws/internal"
+	"framework-gin/internal/ws/proto/pb"
 	"github.com/qiafan666/gotato/commons/gerr"
 )
 

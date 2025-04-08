@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"framework-gin/ws/internal"
-	"framework-gin/ws/proto/pb"
-	"framework-gin/ws/services"
+	"framework-gin/internal/ws/internal"
+	"framework-gin/internal/ws/proto/pb"
+	"framework-gin/internal/ws/services"
 	"github.com/qiafan666/gotato/commons/gerr"
 	"google.golang.org/protobuf/proto"
 )
@@ -12,11 +12,9 @@ type PrivateController struct {
 	privateService services.PrivateService
 }
 
-func NewPrivateController(
-	privateService services.PrivateService,
-) PrivateController {
+func NewPrivateController() PrivateController {
 	return PrivateController{
-		privateService: privateService,
+		privateService: services.NewPrivateService(),
 	}
 }
 

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"framework-gin/common/errs"
-	"framework-gin/controllers"
 	_ "framework-gin/docs"
-	"framework-gin/ws"
+	"framework-gin/internal/http"
+	"framework-gin/internal/ws"
+	"framework-gin/pkg/common/errs"
 	"github.com/qiafan666/gotato"
 	"github.com/qiafan666/gotato/commons/gerr"
 	_ "net/http/pprof"
@@ -20,7 +20,7 @@ func main() {
 	server := gotato.GetGotato()
 	server.RegisterErrorCodeAndMsg(gerr.MsgLanguageChinese, errs.ChineseCodeMsg())
 	server.StartServer(gotato.GinService, gotato.DatabaseService, gotato.RedisService)
-	controllers.RegisterRouter(server.App())
+	http.Register(server.App())
 	ws.Register(server.GetCtx(), server.App())
 	server.WaitClose()
 }

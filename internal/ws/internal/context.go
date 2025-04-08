@@ -2,7 +2,7 @@ package internal
 
 import (
 	"context"
-	"framework-gin/common"
+	"framework-gin/pkg/common"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"
 	"github.com/qiafan666/gotato/commons/gerr"

@@ -2,10 +2,10 @@ package internal
 
 import (
 	"context"
-	"framework-gin/common"
-	"framework-gin/common/errs"
-	"framework-gin/ws/constant"
-	"framework-gin/ws/proto/pb"
+	"framework-gin/internal/ws/constant"
+	"framework-gin/internal/ws/proto/pb"
+	"framework-gin/pkg/common"
+	"framework-gin/pkg/common/errs"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons/gcast"
 	"github.com/qiafan666/gotato/commons/gcommon"

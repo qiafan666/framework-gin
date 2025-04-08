@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	"framework-gin/common/function"
+	"framework-gin/internal/http/common/function"
+	"framework-gin/internal/http/services"
 	"framework-gin/pojo/request"
-	"framework-gin/services"
 	"github.com/gin-gonic/gin"
 	"github.com/qiafan666/gotato/commons/ggin"
 )
@@ -14,7 +14,7 @@ type PortalController struct {
 
 func NewPortalController() *PortalController {
 	return &PortalController{
-		portalService: services.NewPortalServiceInstance(),
+		portalService: services.NewPortalService(),
 	}
 }
 

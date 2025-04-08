@@ -1,11 +1,12 @@
-package controllers
+package http
 
 import (
-	"framework-gin/middleware"
+	"framework-gin/internal/http/controllers"
+	"framework-gin/internal/http/middleware"
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRouter(r *gin.Engine) {
+func Register(r *gin.Engine) {
 	//default setting
 	r.Use(middleware.Cors).
 		Use(middleware.Common).
@@ -14,7 +15,7 @@ func RegisterRouter(r *gin.Engine) {
 	rootGroup := r.Group("v1")
 
 	//注册controller
-	portalController := NewPortalController()
+	portalController := controllers.NewPortalController()
 
 	portalGroup := rootGroup.Group("portal")
 	{

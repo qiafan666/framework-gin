@@ -1,7 +1,7 @@
 # 获取当前目录
 CUR_DIR := $(shell pwd)
 # curd生成代码工具目录
-GENERATE_DIR := $(CUR_DIR)/tool/generateCURD
+GENERATE_DIR := $(CUR_DIR)/tool/gormt
 # ws proto目录
 WS_PROTO_DIR := $(CUR_DIR)/ws/proto
 # goose mysql连接信息
@@ -17,6 +17,15 @@ else ifeq ($(UNAME_S), Linux)
 else ifeq ($(UNAME_S), Windows_NT)
     EXECUTABLE := $(GENERATE_DIR)/gormt.exe
 endif
+
+.PHONY: init
+init:
+	cd $(GOPATH)/bin; \
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install github.com/envoyproxy/protoc-gen-validate@latest
+	go install github.com/go-swagger/go-swagger/cmd/swagger@latest
+	go install github.com/pressly/goose/v3/cmd/goose@latest
 
 # 根据数据库表生成CURD代码
 .PHONY: curd
